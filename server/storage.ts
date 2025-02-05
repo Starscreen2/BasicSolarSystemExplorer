@@ -1,9 +1,8 @@
 import { users, type User, type InsertUser } from "@shared/schema";
 import { planets, type Planet, type InsertPlanet } from "@shared/schema";
 import { planetData } from "@shared/planetData";
-
-// modify the interface with any CRUD methods
-// you might need
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -14,53 +13,44 @@ export interface IStorage {
   createPlanet(planet: InsertPlanet): Promise<Planet>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private planets: Map<number, Planet>;
-  currentId: number;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.users = new Map();
-    this.planets = new Map();
-    this.currentId = 1;
-
-    // Initialize with sample data
-    planetData.forEach(planet => {
-      this.createPlanet(planet).catch(console.error);
-    });
+    // Initialize the database with sample data if it's empty
+    this.initializeData().catch(console.error);
   }
 
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  private async initializeData() {
+    const existingPlanets = await this.getAllPlanets();
+    if (existingPlanets.length === 0) {
+      for (const planet of planetData) {
+        await this.createPlanet(planet);
+      }
+    }
   }
 
   async getAllPlanets(): Promise<Planet[]> {
-    return Array.from(this.planets.values());
+    return await db.select().from(planets).orderBy(planets.distance);
   }
 
   async getPlanet(id: number): Promise<Planet | undefined> {
-    return this.planets.get(id);
+    const [planet] = await db.select().from(planets).where(eq(planets.id, id));
+    return planet;
   }
 
   async createPlanet(insertPlanet: InsertPlanet): Promise<Planet> {
-    const id = this.currentId++;
-    const planet: Planet = { ...insertPlanet, id };
-    this.planets.set(id, planet);
+    const [planet] = await db.insert(planets).values(insertPlanet).returning();
     return planet;
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  async createUser(user: InsertUser): Promise<User> {
+    throw new Error("Method not implemented.");
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
