@@ -9,9 +9,9 @@ export default function Navigation() {
           <NavigationMenuList>
             <NavigationMenuItem>
               <Link href="/">
-                <a className="text-lg font-bold py-4 block bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-lg font-bold py-4 block bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent cursor-pointer">
                   Solar System Explorer
-                </a>
+                </span>
               </Link>
             </NavigationMenuItem>
           </NavigationMenuList>
