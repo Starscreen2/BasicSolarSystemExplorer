@@ -1,24 +1,50 @@
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Stars, Text } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, Stars, Text, Html } from "@react-three/drei";
 import { Planet } from "@shared/schema";
+import { useRef, useState } from "react";
+import * as THREE from "three";
 
 interface SolarSystemProps {
   planets: Planet[];
 }
 
-function Planet3D({ position, color, name, diameter }: { 
+function OrbitalRing({ radius }: { radius: number }) {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[radius, radius + 0.1, 64]} />
+      <meshBasicMaterial color="#ffffff" opacity={0.1} transparent={true} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+function Planet3D({ position, color, name, diameter, description }: { 
   position: [number, number, number]; 
   color: string;
   name: string;
   diameter: number;
+  description: string;
 }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+
+  // Rotate the planet
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.01;
+    }
+  });
+
   // Scale factor to make planets visible while maintaining relative sizes
   const scaleFactor = diameter / 12742; // Earth's diameter as reference
   const size = Math.max(0.5, scaleFactor); // Minimum size of 0.5 for visibility
 
   return (
     <group position={position}>
-      <mesh>
+      <mesh
+        ref={meshRef}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
         <sphereGeometry args={[size, 32, 32]} />
         <meshStandardMaterial color={color} />
       </mesh>
@@ -31,6 +57,17 @@ function Planet3D({ position, color, name, diameter }: {
       >
         {name}
       </Text>
+      {hovered && (
+        <Html position={[size + 1, 0, 0]}>
+          <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
+            <h3 className="font-bold mb-1">{name}</h3>
+            <p className="text-sm">{description}</p>
+            <div className="mt-1 text-xs">
+              <div>Diameter: {diameter.toLocaleString()} km</div>
+            </div>
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -74,6 +111,12 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
         </Text>
       </group>
 
+      {/* Orbital Rings */}
+      {planets.map((planet, index) => (
+        <OrbitalRing key={`ring-${planet.id}`} radius={planet.distance * distanceScale} />
+      ))}
+
+      {/* Planets */}
       {planets.map((planet, index) => (
         <Planet3D
           key={planet.id}
@@ -81,10 +124,17 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
           color={colors[index]}
           name={planet.name}
           diameter={planet.diameter}
+          description={planet.description}
         />
       ))}
 
-      <OrbitControls enableZoom={true} enablePan={true} enableRotate={true} />
+      <OrbitControls 
+        enableZoom={true} 
+        enablePan={true} 
+        enableRotate={true}
+        maxDistance={100}
+        minDistance={5}
+      />
     </Canvas>
   );
 }
