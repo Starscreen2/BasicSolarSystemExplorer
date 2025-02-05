@@ -83,6 +83,7 @@ function Sun() {
         color="white"
         anchorX="center"
         anchorY="bottom"
+        billboard
       >
         Sun
       </Text>
@@ -144,6 +145,7 @@ function Planet3D({ position, color, name, diameter, description }: {
         color="white"
         anchorX="center"
         anchorY="bottom"
+        billboard
       >
         {name}
       </Text>
