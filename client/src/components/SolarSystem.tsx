@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Stars, Text, Html } from "@react-three/drei";
+import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
 import { useRef, useState } from "react";
 import * as THREE from "three";
@@ -77,16 +77,22 @@ function Sun() {
           roughness={0.7}
         />
       </mesh>
-      <Text
-        position={[0, 3, 0]}
-        fontSize={1.2}
-        color="white"
-        anchorX="center"
-        anchorY="bottom"
-        billboard
+      <Billboard
+        follow={true}
+        lockX={false}
+        lockY={false}
+        lockZ={false}
       >
-        Sun
-      </Text>
+        <Text
+          position={[0, 3, 0]}
+          fontSize={1.2}
+          color="white"
+          anchorX="center"
+          anchorY="bottom"
+        >
+          Sun
+        </Text>
+      </Billboard>
       {hovered && (
         <Html position={[3, 0, 0]}>
           <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
@@ -139,16 +145,22 @@ function Planet3D({ position, color, name, diameter, description }: {
           roughness={0.8}
         />
       </mesh>
-      <Text
-        position={[0, size + 0.5, 0]}
-        fontSize={1.2}
-        color="white"
-        anchorX="center"
-        anchorY="bottom"
-        billboard
+      <Billboard
+        follow={true}
+        lockX={false}
+        lockY={false}
+        lockZ={false}
       >
-        {name}
-      </Text>
+        <Text
+          position={[0, size + 0.5, 0]}
+          fontSize={1.2}
+          color="white"
+          anchorX="center"
+          anchorY="bottom"
+        >
+          {name}
+        </Text>
+      </Billboard>
       {hovered && (
         <Html position={[size + 1, 0, 0]}>
           <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
