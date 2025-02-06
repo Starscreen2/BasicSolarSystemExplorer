@@ -58,9 +58,9 @@ export default function QuizPage() {
     if (isLastQuestion) {
       setIsComplete(true);
     } else {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
 
