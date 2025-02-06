@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Quiz } from "@shared/schema";
@@ -43,11 +42,10 @@ export default function QuizPage() {
 
   const currentQuiz = quizzes[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === quizzes.length - 1;
-  const hasAnswered = selectedAnswer !== null;
 
   const handleAnswer = () => {
     if (selectedAnswer === null) return;
-    
+
     if (selectedAnswer === currentQuiz.correctAnswer) {
       setScore(score + 1);
     }
@@ -58,9 +56,9 @@ export default function QuizPage() {
     if (isLastQuestion) {
       setIsComplete(true);
     } else {
-      setSelectedAnswer(null);
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedAnswer(null); // Reset selection
       setShowExplanation(false);
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
 
@@ -112,7 +110,7 @@ export default function QuizPage() {
         </CardHeader>
         <CardContent>
           <p className="text-lg mb-6">{currentQuiz.question}</p>
-          
+
           <RadioGroup
             value={selectedAnswer?.toString()}
             onValueChange={(value) => setSelectedAnswer(parseInt(value))}
