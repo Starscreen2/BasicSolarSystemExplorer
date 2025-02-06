@@ -146,63 +146,64 @@ function Planet3D({
       const rotationDirection = rotationPeriod < 0 ? -1 : 1;
       planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
 
-      // Handle orbital motion
+      // Calculate orbital position
       const time = state.clock.getElapsedTime();
       const angle = time * baseOrbitalSpeed * orbitSpeedMultiplier;
-      orbitRef.current.rotation.y = angle;
+      const orbitRadius = position[0]; // Use x-coordinate as radius
+
+      // Update position for orbital motion
+      orbitRef.current.position.x = Math.cos(angle) * orbitRadius;
+      orbitRef.current.position.z = Math.sin(angle) * orbitRadius;
     }
   });
 
   // Scale factor to make planets visible while maintaining relative sizes
   const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8)); // Earth's diameter as reference
-  const orbitRadius = position[0]; // Use x-coordinate as radius
 
   return (
     <group ref={orbitRef}>
-      <group position={[orbitRadius, 0, 0]}>
-        <mesh
-          ref={planetRef}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
+      <mesh
+        ref={planetRef}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <sphereGeometry args={[scaleFactor, 32, 32]} />
+        <meshStandardMaterial 
+          color={color} 
+          map={texture}
+          metalness={0.2}
+          roughness={0.8}
+        />
+      </mesh>
+      <group>
+        <Billboard
+          follow={true}
+          lockX={false}
+          lockY={false}
+          lockZ={false}
         >
-          <sphereGeometry args={[scaleFactor, 32, 32]} />
-          <meshStandardMaterial 
-            color={color} 
-            map={texture}
-            metalness={0.2}
-            roughness={0.8}
-          />
-        </mesh>
-        <group>
-          <Billboard
-            follow={true}
-            lockX={false}
-            lockY={false}
-            lockZ={false}
+          <Text
+            position={[0, scaleFactor + 0.5, 0]}
+            fontSize={0.8}
+            color="white"
+            anchorX="center"
+            anchorY="bottom"
           >
-            <Text
-              position={[0, scaleFactor + 0.5, 0]}
-              fontSize={0.8}
-              color="white"
-              anchorX="center"
-              anchorY="bottom"
-            >
-              {name}
-            </Text>
-          </Billboard>
-          {hovered && (
-            <Html position={[scaleFactor + 1, 0, 0]}>
-              <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
-                <h3 className="font-bold mb-1">{name}</h3>
-                <p className="text-sm">{description}</p>
-                <div className="mt-1 text-xs">
-                  <div>Diameter: {diameter.toLocaleString()} km</div>
-                  <div>Orbital Period: {orbitalPeriod} Earth days</div>
-                </div>
+            {name}
+          </Text>
+        </Billboard>
+        {hovered && (
+          <Html position={[scaleFactor + 1, 0, 0]}>
+            <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
+              <h3 className="font-bold mb-1">{name}</h3>
+              <p className="text-sm">{description}</p>
+              <div className="mt-1 text-xs">
+                <div>Diameter: {diameter.toLocaleString()} km</div>
+                <div>Orbital Period: {orbitalPeriod} Earth days</div>
               </div>
-            </Html>
-          )}
-        </group>
+            </div>
+          </Html>
+        )}
       </group>
     </group>
   );
