@@ -17,6 +17,11 @@ export function registerRoutes(app: Express): Server {
     res.json(planet);
   });
 
+  app.get("/api/quizzes", async (_req, res) => {
+    const quizzes = await storage.getAllQuizzes();
+    res.json(quizzes);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

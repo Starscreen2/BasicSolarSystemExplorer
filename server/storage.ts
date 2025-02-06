@@ -1,5 +1,6 @@
 import { users, type User, type InsertUser } from "@shared/schema";
 import { planets, type Planet, type InsertPlanet } from "@shared/schema";
+import { quizzes, type Quiz, type InsertQuiz } from "@shared/schema";
 import { planetData } from "@shared/planetData";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -11,6 +12,8 @@ export interface IStorage {
   getAllPlanets(): Promise<Planet[]>;
   getPlanet(id: number): Promise<Planet | undefined>;
   createPlanet(planet: InsertPlanet): Promise<Planet>;
+  getAllQuizzes(): Promise<Quiz[]>;
+  createQuiz(quiz: InsertQuiz): Promise<Quiz>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -40,6 +43,15 @@ export class DatabaseStorage implements IStorage {
   async createPlanet(insertPlanet: InsertPlanet): Promise<Planet> {
     const [planet] = await db.insert(planets).values(insertPlanet).returning();
     return planet;
+  }
+
+  async getAllQuizzes(): Promise<Quiz[]> {
+    return await db.select().from(quizzes);
+  }
+
+  async createQuiz(insertQuiz: InsertQuiz): Promise<Quiz> {
+    const [quiz] = await db.insert(quizzes).values(insertQuiz).returning();
+    return quiz;
   }
 
   async getUser(id: number): Promise<User | undefined> {

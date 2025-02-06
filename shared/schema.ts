@@ -15,6 +15,17 @@ export const planets = pgTable("planets", {
   nameIdx: index("name_idx").on(table.name),
 }));
 
+export const quizzes = pgTable("quizzes", {
+  id: serial("id").primaryKey(),
+  planetId: integer("planet_id").notNull(),
+  question: text("question").notNull(),
+  options: text("options").array().notNull(),
+  correctAnswer: integer("correct_answer").notNull(),
+  explanation: text("explanation").notNull(),
+}, (table) => ({
+  planetIdx: index("planet_id_idx").on(table.planetId),
+}));
+
 export const insertPlanetSchema = createInsertSchema(planets).pick({
   name: true,
   description: true,
@@ -25,5 +36,15 @@ export const insertPlanetSchema = createInsertSchema(planets).pick({
   facts: true,
 });
 
+export const insertQuizSchema = createInsertSchema(quizzes).pick({
+  planetId: true,
+  question: true,
+  options: true,
+  correctAnswer: true,
+  explanation: true,
+});
+
 export type InsertPlanet = z.infer<typeof insertPlanetSchema>;
 export type Planet = typeof planets.$inferSelect;
+export type InsertQuiz = z.infer<typeof insertQuizSchema>;
+export type Quiz = typeof quizzes.$inferSelect;
