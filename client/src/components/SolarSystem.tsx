@@ -21,7 +21,6 @@ function createTexturePattern() {
   gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
   gradient.addColorStop(1, 'rgba(255, 255, 255, 0.2)');
 
-  // Draw some random dots
   context.fillStyle = gradient;
   context.fillRect(0, 0, 64, 64);
 
@@ -79,34 +78,36 @@ function Sun() {
           roughness={0.7}
         />
       </mesh>
-      <Billboard
-        follow={true}
-        lockX={false}
-        lockY={false}
-        lockZ={false}
-      >
-        <Text
-          position={[0, 3, 0]}
-          fontSize={1.2}
-          color="white"
-          anchorX="center"
-          anchorY="bottom"
+      <group>
+        <Billboard
+          follow={true}
+          lockX={false}
+          lockY={false}
+          lockZ={false}
         >
-          Sun
-        </Text>
-      </Billboard>
-      {hovered && (
-        <Html position={[3, 0, 0]}>
-          <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
-            <h3 className="font-bold mb-1">Sun</h3>
-            <p className="text-sm">The star at the center of our Solar System</p>
-            <div className="mt-1 text-xs">
-              <div>Diameter: 1,392,700 km</div>
-              <div>Surface Temperature: 5,500°C</div>
+          <Text
+            position={[0, 3, 0]}
+            fontSize={1.2}
+            color="white"
+            anchorX="center"
+            anchorY="bottom"
+          >
+            Sun
+          </Text>
+        </Billboard>
+        {hovered && (
+          <Html position={[3, 0, 0]}>
+            <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
+              <h3 className="font-bold mb-1">Sun</h3>
+              <p className="text-sm">The star at the center of our Solar System</p>
+              <div className="mt-1 text-xs">
+                <div>Diameter: 1,392,700 km</div>
+                <div>Surface Temperature: 5,500°C</div>
+              </div>
             </div>
-          </div>
-        </Html>
-      )}
+          </Html>
+        )}
+      </group>
     </group>
   );
 }
@@ -128,6 +129,7 @@ function Planet3D({
   orbitalPeriod: number;
   rotationPeriod: number;
 }) {
+  const orbitRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
@@ -139,69 +141,69 @@ function Planet3D({
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 30);
 
   useFrame((state) => {
-    if (planetRef.current) {
-      // Adjust rotation speed based on settings and direction
+    if (planetRef.current && orbitRef.current) {
+      // Handle planet rotation
       const rotationDirection = rotationPeriod < 0 ? -1 : 1;
       planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
 
-      // Calculate orbital position
+      // Handle orbital motion
       const time = state.clock.getElapsedTime();
       const angle = time * baseOrbitalSpeed * orbitSpeedMultiplier;
-
-      // Update position for orbital motion
-      const orbitRadius = position[0]; // Use x-coordinate as radius
-      planetRef.current.position.x = Math.cos(angle) * orbitRadius;
-      planetRef.current.position.z = Math.sin(angle) * orbitRadius;
+      orbitRef.current.rotation.y = angle;
     }
   });
 
   // Scale factor to make planets visible while maintaining relative sizes
   const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8)); // Earth's diameter as reference
+  const orbitRadius = position[0]; // Use x-coordinate as radius
 
   return (
-    <group>
-      <mesh
-        ref={planetRef}
-        position={position}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-      >
-        <sphereGeometry args={[scaleFactor, 32, 32]} />
-        <meshStandardMaterial 
-          color={color} 
-          map={texture}
-          metalness={0.2}
-          roughness={0.8}
-        />
-        <Billboard
-          follow={true}
-          lockX={false}
-          lockY={false}
-          lockZ={false}
+    <group ref={orbitRef}>
+      <group position={[orbitRadius, 0, 0]}>
+        <mesh
+          ref={planetRef}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
         >
-          <Text
-            position={[0, scaleFactor + 0.5, 0]}
-            fontSize={0.8}
-            color="white"
-            anchorX="center"
-            anchorY="bottom"
+          <sphereGeometry args={[scaleFactor, 32, 32]} />
+          <meshStandardMaterial 
+            color={color} 
+            map={texture}
+            metalness={0.2}
+            roughness={0.8}
+          />
+        </mesh>
+        <group>
+          <Billboard
+            follow={true}
+            lockX={false}
+            lockY={false}
+            lockZ={false}
           >
-            {name}
-          </Text>
-        </Billboard>
-        {hovered && (
-          <Html position={[scaleFactor + 1, 0, 0]}>
-            <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
-              <h3 className="font-bold mb-1">{name}</h3>
-              <p className="text-sm">{description}</p>
-              <div className="mt-1 text-xs">
-                <div>Diameter: {diameter.toLocaleString()} km</div>
-                <div>Orbital Period: {orbitalPeriod} Earth days</div>
+            <Text
+              position={[0, scaleFactor + 0.5, 0]}
+              fontSize={0.8}
+              color="white"
+              anchorX="center"
+              anchorY="bottom"
+            >
+              {name}
+            </Text>
+          </Billboard>
+          {hovered && (
+            <Html position={[scaleFactor + 1, 0, 0]}>
+              <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
+                <h3 className="font-bold mb-1">{name}</h3>
+                <p className="text-sm">{description}</p>
+                <div className="mt-1 text-xs">
+                  <div>Diameter: {diameter.toLocaleString()} km</div>
+                  <div>Orbital Period: {orbitalPeriod} Earth days</div>
+                </div>
               </div>
-            </div>
-          </Html>
-        )}
-      </mesh>
+            </Html>
+          )}
+        </group>
+      </group>
     </group>
   );
 }
