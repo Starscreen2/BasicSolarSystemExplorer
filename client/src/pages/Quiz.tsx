@@ -57,7 +57,7 @@ export default function QuizPage() {
       setIsComplete(true);
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedAnswer(null); // Reset selection
+      setSelectedAnswer(null);
       setShowExplanation(false);
     }
   };
@@ -112,6 +112,7 @@ export default function QuizPage() {
           <p className="text-lg mb-6">{currentQuiz.question}</p>
 
           <RadioGroup
+            key={currentQuestionIndex} // Force re-render on question change
             value={selectedAnswer?.toString()}
             onValueChange={(value) => setSelectedAnswer(parseInt(value))}
             className="space-y-4"
@@ -119,7 +120,7 @@ export default function QuizPage() {
           >
             {currentQuiz.options.map((option, index) => (
               <div
-                key={index}
+                key={`${currentQuestionIndex}-${index}`}
                 className={`flex items-center space-x-3 p-4 rounded-lg border ${
                   showExplanation
                     ? index === currentQuiz.correctAnswer
