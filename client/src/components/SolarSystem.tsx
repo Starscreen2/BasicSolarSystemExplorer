@@ -109,12 +109,13 @@ function Sun() {
   );
 }
 
-function Planet3D({ position, color, name, diameter, description }: { 
+function Planet3D({ position, color, name, diameter, description, rotationSpeed }: { 
   position: [number, number, number]; 
   color: string;
   name: string;
   diameter: number;
   description: string;
+  rotationSpeed: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
@@ -122,7 +123,7 @@ function Planet3D({ position, color, name, diameter, description }: {
 
   useFrame(() => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.01;
+      meshRef.current.rotation.y += rotationSpeed;
     }
   });
 
@@ -177,6 +178,7 @@ function Planet3D({ position, color, name, diameter, description }: {
 }
 
 export default function SolarSystem({ planets }: SolarSystemProps) {
+  const [rotationSpeed, setRotationSpeed] = useState(0.01);
   const colors = [
     "#ffcc00", // Mercury
     "#ff9933", // Venus
@@ -214,6 +216,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
           name={planet.name}
           diameter={planet.diameter}
           description={planet.description}
+          rotationSpeed={rotationSpeed}
         />
       ))}
 
@@ -225,5 +228,16 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
         minDistance={5}
       />
     </Canvas>
+    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-64 bg-black/50 p-2 rounded-lg">
+      <Slider
+        defaultValue={[1]}
+        max={5}
+        min={0}
+        step={0.1}
+        value={[rotationSpeed * 100]}
+        onValueChange={(value) => setRotationSpeed(value[0] / 100)}
+      />
+      <div className="text-white text-center text-sm mt-1">Rotation Speed</div>
+    </div>
   );
 }
