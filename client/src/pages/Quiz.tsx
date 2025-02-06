@@ -58,12 +58,9 @@ export default function QuizPage() {
     if (isLastQuestion) {
       setIsComplete(true);
     } else {
+      setSelectedAnswer(null);
+      setShowExplanation(false);
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      // Reset state after changing question
-      setTimeout(() => {
-        setSelectedAnswer(null);
-        setShowExplanation(false);
-      }, 0);
     }
   };
 
