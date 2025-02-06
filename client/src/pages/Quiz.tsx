@@ -55,13 +55,15 @@ export default function QuizPage() {
   };
 
   const handleNext = () => {
-    setSelectedAnswer(null);
-    setShowExplanation(false);
-    
     if (isLastQuestion) {
       setIsComplete(true);
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+      // Reset state after changing question
+      setTimeout(() => {
+        setSelectedAnswer(null);
+        setShowExplanation(false);
+      }, 0);
     }
   };
 
