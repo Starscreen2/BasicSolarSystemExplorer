@@ -115,7 +115,7 @@ export default function QuizPage() {
           <p className="text-lg mb-6">{currentQuiz.question}</p>
           
           <RadioGroup
-            value={selectedAnswer === null ? undefined : selectedAnswer.toString()}
+            value={selectedAnswer?.toString()}
             onValueChange={(value) => setSelectedAnswer(parseInt(value))}
             className="space-y-4"
             disabled={showExplanation}
