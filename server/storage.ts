@@ -2,6 +2,7 @@ import { users, type User, type InsertUser } from "@shared/schema";
 import { planets, type Planet, type InsertPlanet } from "@shared/schema";
 import { quizzes, type Quiz, type InsertQuiz } from "@shared/schema";
 import { planetData } from "@shared/planetData";
+import { quizData } from "@shared/quizData";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -27,6 +28,13 @@ export class DatabaseStorage implements IStorage {
     if (existingPlanets.length === 0) {
       for (const planet of planetData) {
         await this.createPlanet(planet);
+      }
+    }
+
+    const existingQuizzes = await this.getAllQuizzes();
+    if (existingQuizzes.length === 0) {
+      for (const quiz of quizData) {
+        await this.createQuiz(quiz);
       }
     }
   }
