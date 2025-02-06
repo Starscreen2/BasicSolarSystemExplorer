@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Quiz } from "@shared/schema";
@@ -6,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Check, X } from "lucide-react";
+import { Check, X, Trophy } from "lucide-react";
 
 export default function QuizPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
 
   const { data: quizzes, isLoading } = useQuery<Quiz[]>({
     queryKey: ["/api/quizzes"],
@@ -53,12 +55,43 @@ export default function QuizPage() {
   };
 
   const handleNext = () => {
-    setSelectedAnswer(null);
-    setShowExplanation(false);
-    if (!isLastQuestion) {
+    if (isLastQuestion) {
+      setIsComplete(true);
+    } else {
+      setSelectedAnswer(null);
+      setShowExplanation(false);
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
+
+  const handleRetry = () => {
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    setScore(0);
+    setIsComplete(false);
+  };
+
+  if (isComplete) {
+    const percentage = (score / quizzes.length) * 100;
+    return (
+      <div className="py-8">
+        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+          Quiz Complete!
+        </h1>
+        <Card className="bg-black/50">
+          <CardContent className="p-8 flex flex-col items-center">
+            <Trophy className="w-16 h-16 text-yellow-500 mb-4" />
+            <h2 className="text-3xl font-bold mb-2">Your Score: {score}/{quizzes.length}</h2>
+            <p className="text-xl mb-6">{percentage}% Correct</p>
+            <Button onClick={handleRetry} size="lg">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="py-8">
@@ -87,27 +120,35 @@ export default function QuizPage() {
             disabled={showExplanation}
           >
             {currentQuiz.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
+              <div
+                key={index}
+                className={`flex items-center space-x-3 p-4 rounded-lg border ${
+                  showExplanation
+                    ? index === currentQuiz.correctAnswer
+                      ? "border-green-500 bg-green-500/10"
+                      : index === selectedAnswer
+                      ? "border-red-500 bg-red-500/10"
+                      : "border-transparent"
+                    : "border-muted hover:border-muted-foreground/50 transition-colors"
+                }`}
+              >
                 <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className="text-lg">
+                <Label htmlFor={`option-${index}`} className="text-lg flex-grow cursor-pointer">
                   {option}
                 </Label>
+                {showExplanation && index === currentQuiz.correctAnswer && (
+                  <Check className="h-5 w-5 text-green-500" />
+                )}
+                {showExplanation && index === selectedAnswer && index !== currentQuiz.correctAnswer && (
+                  <X className="h-5 w-5 text-red-500" />
+                )}
               </div>
             ))}
           </RadioGroup>
 
           {showExplanation && (
-            <Alert className={`mt-6 ${selectedAnswer === currentQuiz.correctAnswer ? 'border-green-500' : 'border-red-500'}`}>
-              <div className="flex items-center gap-2">
-                {selectedAnswer === currentQuiz.correctAnswer ? (
-                  <Check className="h-5 w-5 text-green-500" />
-                ) : (
-                  <X className="h-5 w-5 text-red-500" />
-                )}
-                <AlertTitle>
-                  {selectedAnswer === currentQuiz.correctAnswer ? 'Correct!' : 'Incorrect'}
-                </AlertTitle>
-              </div>
+            <Alert className="mt-6 border-info">
+              <AlertTitle>Explanation</AlertTitle>
               <AlertDescription className="mt-2">
                 {currentQuiz.explanation}
               </AlertDescription>
