@@ -54,10 +54,11 @@ function Sun() {
   const sunRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
+  const { rotationSpeedMultiplier } = useSettings();
 
   useFrame(() => {
     if (sunRef.current) {
-      sunRef.current.rotation.y += 0.005;
+      sunRef.current.rotation.y += 0.005 * rotationSpeedMultiplier;
     }
   });
 
@@ -127,7 +128,6 @@ function Planet3D({
   orbitalPeriod: number;
   rotationPeriod: number;
 }) {
-  const groupRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
@@ -139,7 +139,7 @@ function Planet3D({
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 30);
 
   useFrame((state) => {
-    if (planetRef.current && groupRef.current) {
+    if (planetRef.current) {
       // Adjust rotation speed based on settings and direction
       const rotationDirection = rotationPeriod < 0 ? -1 : 1;
       planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
@@ -148,8 +148,10 @@ function Planet3D({
       const time = state.clock.getElapsedTime();
       const angle = time * baseOrbitalSpeed * orbitSpeedMultiplier;
 
-      // Rotate the entire group (orbit)
-      groupRef.current.rotation.y = angle;
+      // Update position for orbital motion
+      const orbitRadius = position[0]; // Use x-coordinate as radius
+      planetRef.current.position.x = Math.cos(angle) * orbitRadius;
+      planetRef.current.position.z = Math.sin(angle) * orbitRadius;
     }
   });
 
@@ -157,21 +159,20 @@ function Planet3D({
   const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8)); // Earth's diameter as reference
 
   return (
-    <group ref={groupRef}>
-      <group position={position}>
-        <mesh
-          ref={planetRef}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
-        >
-          <sphereGeometry args={[scaleFactor, 32, 32]} />
-          <meshStandardMaterial 
-            color={color} 
-            map={texture}
-            metalness={0.2}
-            roughness={0.8}
-          />
-        </mesh>
+    <group>
+      <mesh
+        ref={planetRef}
+        position={position}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <sphereGeometry args={[scaleFactor, 32, 32]} />
+        <meshStandardMaterial 
+          color={color} 
+          map={texture}
+          metalness={0.2}
+          roughness={0.8}
+        />
         <Billboard
           follow={true}
           lockX={false}
@@ -200,7 +201,7 @@ function Planet3D({
             </div>
           </Html>
         )}
-      </group>
+      </mesh>
     </group>
   );
 }
