@@ -127,78 +127,80 @@ function Planet3D({
   orbitalPeriod: number;
   rotationPeriod: number;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
   const { orbitSpeedMultiplier, rotationSpeedMultiplier } = useSettings();
 
   // Calculate relative speeds
-  // Base speed multiplier to make orbits visible (1 Earth year = ~10 seconds)
-  const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 60); // Convert to radians per frame
-  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 60);
+  // Base speed multiplier to make orbits visible (1 Earth year = ~6 seconds)
+  const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 30); // Convert to radians per frame
+  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 30);
 
   useFrame((state) => {
-    if (meshRef.current) {
+    if (planetRef.current && groupRef.current) {
       // Adjust rotation speed based on settings and direction
       const rotationDirection = rotationPeriod < 0 ? -1 : 1;
-      meshRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
+      planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
 
       // Calculate orbital position
       const time = state.clock.getElapsedTime();
       const angle = time * baseOrbitalSpeed * orbitSpeedMultiplier;
 
-      // Update position based on orbit
-      meshRef.current.position.x = position[0] * Math.cos(angle);
-      meshRef.current.position.z = position[0] * Math.sin(angle);
+      // Rotate the entire group (orbit)
+      groupRef.current.rotation.y = angle;
     }
   });
 
   // Scale factor to make planets visible while maintaining relative sizes
-  const scaleFactor = diameter / 12742; // Earth's diameter as reference
-  const size = Math.max(0.5, scaleFactor); // Minimum size of 0.5 for visibility
+  const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8)); // Earth's diameter as reference
 
   return (
-    <group position={position}>
-      <mesh
-        ref={meshRef}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-      >
-        <sphereGeometry args={[size, 32, 32]} />
-        <meshStandardMaterial 
-          color={color} 
-          map={texture}
-          metalness={0.2}
-          roughness={0.8}
-        />
-      </mesh>
-      <Billboard
-        follow={true}
-        lockX={false}
-        lockY={false}
-        lockZ={false}
-      >
-        <Text
-          position={[0, size + 0.5, 0]}
-          fontSize={1.2}
-          color="white"
-          anchorX="center"
-          anchorY="bottom"
+    <group ref={groupRef}>
+      <group position={position}>
+        <mesh
+          ref={planetRef}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
         >
-          {name}
-        </Text>
-      </Billboard>
-      {hovered && (
-        <Html position={[size + 1, 0, 0]}>
-          <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
-            <h3 className="font-bold mb-1">{name}</h3>
-            <p className="text-sm">{description}</p>
-            <div className="mt-1 text-xs">
-              <div>Diameter: {diameter.toLocaleString()} km</div>
+          <sphereGeometry args={[scaleFactor, 32, 32]} />
+          <meshStandardMaterial 
+            color={color} 
+            map={texture}
+            metalness={0.2}
+            roughness={0.8}
+          />
+        </mesh>
+        <Billboard
+          follow={true}
+          lockX={false}
+          lockY={false}
+          lockZ={false}
+        >
+          <Text
+            position={[0, scaleFactor + 0.5, 0]}
+            fontSize={0.8}
+            color="white"
+            anchorX="center"
+            anchorY="bottom"
+          >
+            {name}
+          </Text>
+        </Billboard>
+        {hovered && (
+          <Html position={[scaleFactor + 1, 0, 0]}>
+            <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
+              <h3 className="font-bold mb-1">{name}</h3>
+              <p className="text-sm">{description}</p>
+              <div className="mt-1 text-xs">
+                <div>Diameter: {diameter.toLocaleString()} km</div>
+                <div>Orbital Period: {orbitalPeriod} Earth days</div>
+              </div>
             </div>
-          </div>
-        </Html>
-      )}
+          </Html>
+        )}
+      </group>
     </group>
   );
 }
@@ -217,10 +219,10 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   // Calculate scaling factor for distances
   const maxDistance = Math.max(...planets.map(p => p.distance));
-  const distanceScale = 30 / maxDistance; // Scale to fit within ~30 units
+  const distanceScale = 20 / maxDistance; // Scale to fit within ~20 units
 
   return (
-    <Canvas camera={{ position: [0, 30, 35], fov: 60 }}>
+    <Canvas camera={{ position: [0, 20, 25], fov: 60 }}>
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} />
       <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
@@ -228,7 +230,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
       <Sun />
 
       {/* Orbital Rings */}
-      {planets.map((planet, index) => (
+      {planets.map((planet) => (
         <OrbitalRing key={`ring-${planet.id}`} radius={planet.distance * distanceScale} />
       ))}
 
@@ -250,7 +252,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
         enableZoom={true} 
         enablePan={true} 
         enableRotate={true}
-        maxDistance={100}
+        maxDistance={50}
         minDistance={5}
       />
     </Canvas>

@@ -24,7 +24,7 @@ export default function SpeedControls() {
       <Button
         variant="outline"
         size="icon"
-        className="fixed bottom-4 right-4 z-50"
+        className="fixed bottom-4 right-4 z-50 bg-black/60 hover:bg-black/80"
         onClick={() => setIsOpen(true)}
       >
         <Settings2 className="h-4 w-4" />
@@ -35,7 +35,7 @@ export default function SpeedControls() {
   return (
     <Card className="fixed bottom-4 right-4 w-80 z-50 bg-black/80 border-primary/20">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Animation Settings</CardTitle>
+        <CardTitle className="text-sm font-medium">Animation Controls</CardTitle>
         <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
           <Settings2 className="h-4 w-4" />
         </Button>
@@ -48,8 +48,9 @@ export default function SpeedControls() {
               value={[orbitSpeedMultiplier]}
               onValueChange={([value]) => setOrbitSpeedMultiplier(value)}
               min={0}
-              max={5}
+              max={3}
               step={0.1}
+              className="cursor-pointer"
             />
             <div className="text-xs text-muted-foreground">
               Current: {orbitSpeedMultiplier.toFixed(1)}x
@@ -62,8 +63,9 @@ export default function SpeedControls() {
               value={[rotationSpeedMultiplier]}
               onValueChange={([value]) => setRotationSpeedMultiplier(value)}
               min={0}
-              max={5}
+              max={3}
               step={0.1}
+              className="cursor-pointer"
             />
             <div className="text-xs text-muted-foreground">
               Current: {rotationSpeedMultiplier.toFixed(1)}x
