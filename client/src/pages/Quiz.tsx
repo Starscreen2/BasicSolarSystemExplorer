@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Check, X } from "lucide-react";
+import { Check, X, Trophy } from "lucide-react";
 
 export default function QuizPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
 
   const { data: quizzes, isLoading } = useQuery<Quiz[]>({
     queryKey: ["/api/quizzes"],
@@ -45,7 +46,7 @@ export default function QuizPage() {
 
   const handleAnswer = () => {
     if (selectedAnswer === null) return;
-    
+
     if (selectedAnswer === currentQuiz.correctAnswer) {
       setScore(score + 1);
     }
@@ -53,12 +54,54 @@ export default function QuizPage() {
   };
 
   const handleNext = () => {
-    setSelectedAnswer(null);
-    setShowExplanation(false);
-    if (!isLastQuestion) {
+    if (isLastQuestion) {
+      setIsComplete(true);
+    } else {
+      setSelectedAnswer(null);
+      setShowExplanation(false);
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
+
+  const handleRetry = () => {
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    setScore(0);
+    setIsComplete(false);
+  };
+
+  if (isComplete) {
+    const percentage = Math.round((score / quizzes.length) * 100);
+    return (
+      <div className="py-8">
+        <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+          Quiz Results
+        </h1>
+        <Card className="bg-black/50">
+          <CardContent className="pt-6 flex flex-col items-center">
+            <Trophy className="w-16 h-16 text-yellow-500 mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Quiz Complete!</h2>
+            <p className="text-xl mb-4">Your Score: {score}/{quizzes.length}</p>
+            <div className="w-full max-w-xs bg-black/30 rounded-full h-4 mb-6">
+              <div 
+                className="bg-primary h-4 rounded-full transition-all duration-1000"
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+            <p className="text-lg mb-6">
+              {percentage >= 80 ? "Excellent work! You're a solar system expert!" :
+               percentage >= 60 ? "Good job! Keep learning about our solar system." :
+               "Keep exploring and learning about our fascinating solar system!"}
+            </p>
+            <Button onClick={handleRetry} className="w-full max-w-xs">
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="py-8">
@@ -79,7 +122,7 @@ export default function QuizPage() {
         </CardHeader>
         <CardContent>
           <p className="text-lg mb-6">{currentQuiz.question}</p>
-          
+
           <RadioGroup
             value={selectedAnswer?.toString()}
             onValueChange={(value) => setSelectedAnswer(parseInt(value))}
@@ -87,9 +130,18 @@ export default function QuizPage() {
             disabled={showExplanation}
           >
             {currentQuiz.options.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className="text-lg">
+              <div key={index} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-white/5 transition-colors">
+                <RadioGroupItem value={index.toString()} id={`option-${index}`} className="mt-1" />
+                <Label 
+                  htmlFor={`option-${index}`} 
+                  className={`text-lg leading-normal cursor-pointer ${
+                    showExplanation && index === currentQuiz.correctAnswer
+                      ? 'text-green-400'
+                      : showExplanation && index === selectedAnswer
+                      ? 'text-red-400'
+                      : ''
+                  }`}
+                >
                   {option}
                 </Label>
               </div>
