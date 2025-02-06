@@ -7,6 +7,8 @@ import Home from "@/pages/Home";
 import PlanetDetail from "@/pages/PlanetDetail";
 import Quiz from "@/pages/Quiz";
 import NotFound from "@/pages/not-found";
+import { SettingsProvider } from "@/lib/settings-context";
+import SpeedControls from "@/components/SpeedControls";
 
 function Router() {
   return (
@@ -22,13 +24,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background text-foreground">
-        <Navigation />
-        <main className="container mx-auto px-4">
-          <Router />
-        </main>
-      </div>
-      <Toaster />
+      <SettingsProvider>
+        <div className="min-h-screen bg-background text-foreground">
+          <Navigation />
+          <main className="container mx-auto px-4">
+            <Router />
+          </main>
+          <SpeedControls />
+        </div>
+        <Toaster />
+      </SettingsProvider>
     </QueryClientProvider>
   );
 }

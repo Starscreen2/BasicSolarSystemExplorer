@@ -3,6 +3,7 @@ import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
 import { useRef, useState } from "react";
 import * as THREE from "three";
+import { useSettings } from "@/lib/settings-context";
 
 interface SolarSystemProps {
   planets: Planet[];
@@ -109,20 +110,46 @@ function Sun() {
   );
 }
 
-function Planet3D({ position, color, name, diameter, description }: { 
+function Planet3D({ 
+  position, 
+  color, 
+  name, 
+  diameter, 
+  description,
+  orbitalPeriod,
+  rotationPeriod
+}: { 
   position: [number, number, number]; 
   color: string;
   name: string;
   diameter: number;
   description: string;
+  orbitalPeriod: number;
+  rotationPeriod: number;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
+  const { orbitSpeedMultiplier, rotationSpeedMultiplier } = useSettings();
 
-  useFrame(() => {
+  // Calculate relative speeds
+  // Base speed multiplier to make orbits visible (1 Earth year = ~10 seconds)
+  const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 60); // Convert to radians per frame
+  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 60);
+
+  useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.01;
+      // Adjust rotation speed based on settings and direction
+      const rotationDirection = rotationPeriod < 0 ? -1 : 1;
+      meshRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
+
+      // Calculate orbital position
+      const time = state.clock.getElapsedTime();
+      const angle = time * baseOrbitalSpeed * orbitSpeedMultiplier;
+
+      // Update position based on orbit
+      meshRef.current.position.x = position[0] * Math.cos(angle);
+      meshRef.current.position.z = position[0] * Math.sin(angle);
     }
   });
 
@@ -214,6 +241,8 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
           name={planet.name}
           diameter={planet.diameter}
           description={planet.description}
+          orbitalPeriod={planet.orbitalPeriod}
+          rotationPeriod={planet.rotationPeriod}
         />
       ))}
 

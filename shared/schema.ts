@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, index, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -11,6 +11,8 @@ export const planets = pgTable("planets", {
   temperature: integer("temperature").notNull(),
   imageUrl: text("image_url").notNull(),
   facts: text("facts").array().notNull(),
+  orbitalPeriod: real("orbital_period").notNull(),
+  rotationPeriod: real("rotation_period").notNull(),
 }, (table) => ({
   nameIdx: index("name_idx").on(table.name),
 }));
@@ -34,6 +36,8 @@ export const insertPlanetSchema = createInsertSchema(planets).pick({
   temperature: true,
   imageUrl: true,
   facts: true,
+  orbitalPeriod: true,
+  rotationPeriod: true,
 });
 
 export const insertQuizSchema = createInsertSchema(quizzes).pick({

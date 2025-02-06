@@ -12,7 +12,9 @@ export const planetData: InsertPlanet[] = [
       "Mercury has no moons",
       "It completes an orbit around the Sun every 88 Earth days",
       "Despite being closest to the Sun, Venus is actually hotter"
-    ]
+    ],
+    orbitalPeriod: 88, // Earth days
+    rotationPeriod: 58.6 // Earth days
   },
   {
     name: "Venus",
@@ -25,7 +27,9 @@ export const planetData: InsertPlanet[] = [
       "Venus rotates backwards compared to most planets",
       "It has the longest rotation period of any planet",
       "Its atmospheric pressure is 90 times that of Earth"
-    ]
+    ],
+    orbitalPeriod: 224.7, // Earth days
+    rotationPeriod: -243 // Earth days (negative because it rotates backwards)
   },
   {
     name: "Earth",
@@ -38,7 +42,9 @@ export const planetData: InsertPlanet[] = [
       "Earth is the only planet known to have liquid water on its surface",
       "The atmosphere is composed mainly of nitrogen and oxygen",
       "It has one natural satellite - the Moon"
-    ]
+    ],
+    orbitalPeriod: 365.2, // Earth days
+    rotationPeriod: 1 // Earth days
   },
   {
     name: "Mars",
@@ -51,6 +57,8 @@ export const planetData: InsertPlanet[] = [
       "Mars has two small moons: Phobos and Deimos",
       "It has the largest volcano in the solar system - Olympus Mons",
       "The red color comes from iron oxide (rust) in its soil"
-    ]
+    ],
+    orbitalPeriod: 687, // Earth days
+    rotationPeriod: 1.03 // Earth days
   }
 ];
