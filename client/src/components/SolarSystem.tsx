@@ -44,7 +44,7 @@ function OrbitalRing({ radius }: { radius: number }) {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[radius, radius + 0.1, 64]} />
-      <meshBasicMaterial color="#ffffff" opacity={0.1} transparent={true} side={THREE.DoubleSide} />
+      <meshBasicMaterial color="#ffffff" opacity={0.3} transparent={true} side={THREE.DoubleSide} /> {/* Increased opacity */}
     </mesh>
   );
 }
@@ -222,10 +222,11 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   // Calculate scaling factor for distances
   const maxDistance = Math.max(...planets.map(p => p.distance));
-  const distanceScale = 20 / maxDistance; // Scale to fit within ~20 units
+  // Increase the scale factor to spread planets out more
+  const distanceScale = 75 / maxDistance; // Increased from 50 to 75 for even better spacing
 
   return (
-    <Canvas camera={{ position: [0, 20, 25], fov: 60 }}>
+    <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} />
       <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
@@ -255,8 +256,8 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
         enableZoom={true} 
         enablePan={true} 
         enableRotate={true}
-        maxDistance={50}
-        minDistance={5}
+        maxDistance={150} // Increased from 100 to 150
+        minDistance={20} // Increased from 10 to 20
       />
     </Canvas>
   );

@@ -10,13 +10,26 @@ import NotFound from "@/pages/not-found";
 import { SettingsProvider } from "@/lib/settings-context";
 import SpeedControls from "@/components/SpeedControls";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { WithErrorBoundary } from "@/components/WithErrorBoundary";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/planet/:id" component={PlanetDetail} />
-      <Route path="/quiz" component={Quiz} />
+      <Route path="/planet/:id">
+        {(params) => (
+          <WithErrorBoundary>
+            <PlanetDetail />
+          </WithErrorBoundary>
+        )}
+      </Route>
+      <Route path="/quiz">
+        {() => (
+          <WithErrorBoundary>
+            <Quiz />
+          </WithErrorBoundary>
+        )}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -24,20 +37,24 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
         <SettingsProvider>
           <div className="min-h-screen bg-background text-foreground">
-            <Navigation />
+            <WithErrorBoundary>
+              <Navigation />
+            </WithErrorBoundary>
             <main className="container mx-auto px-4">
               <Router />
             </main>
-            <SpeedControls />
+            <WithErrorBoundary>
+              <SpeedControls />
+            </WithErrorBoundary>
           </div>
           <Toaster />
         </SettingsProvider>
-      </ErrorBoundary>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
