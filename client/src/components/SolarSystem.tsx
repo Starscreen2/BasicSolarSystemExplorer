@@ -220,12 +220,12 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
     "#3333cc", // Neptune
   ];
 
-  // Adjust scaling factor for distances to make outer planets more visible
+  // Calculate scaling factor for distances
   const maxDistance = Math.max(...planets.map(p => p.distance));
-  const distanceScale = 40 / Math.log(maxDistance); // Use logarithmic scale for distances
+  const distanceScale = 20 / maxDistance; // Scale to fit within ~20 units
 
   return (
-    <Canvas camera={{ position: [0, 30, 40], fov: 45 }}>
+    <Canvas camera={{ position: [0, 20, 25], fov: 60 }}>
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} />
       <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
@@ -234,17 +234,14 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
       {/* Orbital Rings */}
       {planets.map((planet) => (
-        <OrbitalRing 
-          key={`ring-${planet.id}`} 
-          radius={Math.log(planet.distance) * distanceScale} 
-        />
+        <OrbitalRing key={`ring-${planet.id}`} radius={planet.distance * distanceScale} />
       ))}
 
       {/* Planets */}
       {planets.map((planet, index) => (
         <Planet3D
           key={planet.id}
-          position={[Math.log(planet.distance) * distanceScale, 0, 0]}
+          position={[planet.distance * distanceScale, 0, 0]}
           color={colors[index]}
           name={planet.name}
           diameter={planet.diameter}
@@ -258,8 +255,8 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
         enableZoom={true} 
         enablePan={true} 
         enableRotate={true}
-        maxDistance={100}
-        minDistance={10}
+        maxDistance={50}
+        minDistance={5}
       />
     </Canvas>
   );
