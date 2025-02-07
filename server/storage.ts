@@ -1,15 +1,12 @@
-import { users, type User, type InsertUser } from "@shared/schema";
 import { planets, type Planet, type InsertPlanet } from "@shared/schema";
 import { quizzes, type Quiz, type InsertQuiz } from "@shared/schema";
 import { planetData } from "@shared/planetData";
 import { quizData } from "@shared/quizData";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { log } from "./vite";
 
 export interface IStorage {
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
   getAllPlanets(): Promise<Planet[]>;
   getPlanet(id: number): Promise<Planet | undefined>;
   createPlanet(planet: InsertPlanet): Promise<Planet>;
@@ -24,23 +21,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   private async initializeData() {
-    const existingPlanets = await this.getAllPlanets();
-    if (existingPlanets.length === 0) {
-      for (const planet of planetData) {
-        await this.createPlanet(planet);
-      }
-    }
+    try {
+      const allPlanets = await db.select().from(planets).orderBy(planets.distance);
+      log(`Found ${allPlanets.length} existing planets in database`, "storage");
 
-    const existingQuizzes = await this.getAllQuizzes();
-    if (existingQuizzes.length === 0) {
-      for (const quiz of quizData) {
-        await this.createQuiz(quiz);
+      if (allPlanets.length === 0) {
+        log(`Initializing planets data with ${planetData.length} planets`, "storage");
+        for (const planet of planetData) {
+          await this.createPlanet(planet);
+        }
+        log("Finished initializing planets data", "storage");
       }
+
+      const existingQuizzes = await this.getAllQuizzes();
+      if (existingQuizzes.length === 0) {
+        for (const quiz of quizData) {
+          await this.createQuiz(quiz);
+        }
+      }
+    } catch (error) {
+      log(`Error during database initialization: ${error}`, "error");
+      throw error;
     }
   }
 
   async getAllPlanets(): Promise<Planet[]> {
-    return await db.select().from(planets).orderBy(planets.distance);
+    const allPlanets = await db.select().from(planets).orderBy(planets.distance);
+    log(`Retrieved ${allPlanets.length} planets from database`, "storage");
+    return allPlanets;
   }
 
   async getPlanet(id: number): Promise<Planet | undefined> {
@@ -50,6 +58,7 @@ export class DatabaseStorage implements IStorage {
 
   async createPlanet(insertPlanet: InsertPlanet): Promise<Planet> {
     const [planet] = await db.insert(planets).values(insertPlanet).returning();
+    log(`Created planet: ${planet.name}`, "storage");
     return planet;
   }
 
@@ -60,16 +69,6 @@ export class DatabaseStorage implements IStorage {
   async createQuiz(insertQuiz: InsertQuiz): Promise<Quiz> {
     const [quiz] = await db.insert(quizzes).values(insertQuiz).returning();
     return quiz;
-  }
-
-  async getUser(id: number): Promise<User | undefined> {
-    throw new Error("Method not implemented.");
-  }
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    throw new Error("Method not implemented.");
-  }
-  async createUser(user: InsertUser): Promise<User> {
-    throw new Error("Method not implemented.");
   }
 }
 

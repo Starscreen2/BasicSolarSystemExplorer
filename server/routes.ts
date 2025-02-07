@@ -1,11 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { log } from "./vite";
 
 export function registerRoutes(app: Express): Server {
   app.get("/api/planets", async (_req, res) => {
-    const planets = await storage.getAllPlanets();
-    res.json(planets);
+    try {
+      const planets = await storage.getAllPlanets();
+      log(`Fetched ${planets.length} planets from database`, "express");
+      res.json(planets);
+    } catch (error) {
+      log(`Error fetching planets: ${error}`, "error");
+      res.status(500).json({ message: "Error fetching planets" });
+    }
   });
 
   app.get("/api/planets/:id", async (req, res) => {
