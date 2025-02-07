@@ -419,8 +419,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   };
 
   return (
-    <SettingsContext.Provider value={{ rotationSpeedMultiplier: 1, orbitSpeedMultiplier: 1, isSimulationPaused, toggleSimulationPause }}>
-      <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
+    <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
         <CameraAnimation />
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} />
