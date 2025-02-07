@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { useSettings } from "@/components/SolarSystem";
+import { useSettings } from "@/lib/settings-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings2 } from "lucide-react";
 import { useState } from "react";
@@ -9,29 +9,28 @@ export default function SpeedControls() {
   const {
     orbitSpeedMultiplier,
     rotationSpeedMultiplier,
-    isSimulationPaused,
-    setIsSimulationPaused,
     setOrbitSpeedMultiplier,
     setRotationSpeedMultiplier,
-    resetOrbits,
+  } = useSettings();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const {
+    isSimulationPaused,
+    setIsSimulationPaused,
   } = useSettings();
 
-  const [isOpen, setIsOpen] = useState(false);
+  const resetSpeeds = () => {
+    setOrbitSpeedMultiplier(1);
+    setRotationSpeedMultiplier(1);
+  };
 
   const toggleSimulation = () => {
     setIsSimulationPaused(!isSimulationPaused);
   };
 
-  const handleOrbitSpeedChange = (value: number[]) => {
-    setOrbitSpeedMultiplier(value[0]);
-  };
-
-  const handleRotationSpeedChange = (value: number[]) => {
-    setRotationSpeedMultiplier(value[0]);
-  };
-
   const resetAll = () => {
-    resetOrbits();
+    resetSpeeds();
+    setIsSimulationPaused(false);
   };
 
   if (!isOpen) {
@@ -66,7 +65,7 @@ export default function SpeedControls() {
             </div>
             <Slider
               value={[orbitSpeedMultiplier]}
-              onValueChange={handleOrbitSpeedChange}
+              onValueChange={([value]) => setOrbitSpeedMultiplier(value)}
               min={0}
               max={100}
               step={0.5}
@@ -83,7 +82,7 @@ export default function SpeedControls() {
             </div>
             <Slider
               value={[rotationSpeedMultiplier]}
-              onValueChange={handleRotationSpeedChange}
+              onValueChange={([value]) => setRotationSpeedMultiplier(value)}
               min={0}
               max={100}
               step={0.5}

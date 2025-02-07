@@ -3,6 +3,7 @@ import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
 import { useRef, useState, useEffect, createContext, useContext } from "react";
 import * as THREE from "three";
+import { useSpring, animated } from "@react-spring/three";
 
 interface SolarSystemProps {
   planets: Planet[];
@@ -12,21 +13,15 @@ const SettingsContext = createContext<{
   rotationSpeedMultiplier: number;
   orbitSpeedMultiplier: number;
   isSimulationPaused: boolean;
-  setIsSimulationPaused: (paused: boolean) => void;
-  setRotationSpeedMultiplier: (speed: number) => void;
-  setOrbitSpeedMultiplier: (speed: number) => void;
-  resetOrbits: () => void;
+  toggleSimulationPause: () => void;
 }>({
   rotationSpeedMultiplier: 1,
   orbitSpeedMultiplier: 1,
   isSimulationPaused: false,
-  setIsSimulationPaused: () => {},
-  setRotationSpeedMultiplier: () => {},
-  setOrbitSpeedMultiplier: () => {},
-  resetOrbits: () => {},
+  toggleSimulationPause: () => {},
 });
 
-export function useSettings() {
+function useSettings() {
   return useContext(SettingsContext);
 }
 
@@ -61,10 +56,10 @@ function createTexturePattern() {
   return new THREE.CanvasTexture(canvas);
 }
 
-function OrbitalRing({
-  radius,
-  planet
-}: {
+function OrbitalRing({ 
+  radius, 
+  planet 
+}: { 
   radius: number;
   planet: Planet;
 }) {
@@ -110,7 +105,7 @@ function OrbitalRing({
 
   return (
     <group>
-      <mesh
+      <mesh 
         rotation={[-Math.PI / 2, 0, 0]}
         onPointerOver={(e) => {
           e.stopPropagation();
@@ -124,10 +119,10 @@ function OrbitalRing({
         ref={ringRef}
       >
         <ringGeometry args={[radius, radius + 0.4, 128]} />
-        <meshBasicMaterial
-          color={hovered ? "#6f8fff" : "#ffffff"}
-          opacity={hovered ? 0.5 : 0.3}
-          transparent={true}
+        <meshBasicMaterial 
+          color={hovered ? "#6f8fff" : "#ffffff"} 
+          opacity={hovered ? 0.5 : 0.3} 
+          transparent={true} 
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -192,9 +187,9 @@ function Sun() {
         onPointerOut={() => setHovered(false)}
       >
         <sphereGeometry args={[2, 32, 32]} />
-        <meshStandardMaterial
-          color="#ffdd00"
-          emissive="#ffdd00"
+        <meshStandardMaterial 
+          color="#ffdd00" 
+          emissive="#ffdd00" 
           emissiveIntensity={0.5}
           map={texture}
           metalness={0.3}
@@ -235,24 +230,22 @@ function Sun() {
   );
 }
 
-function Planet3D({
-  position,
-  color,
-  name,
-  diameter,
+function Planet3D({ 
+  position, 
+  color, 
+  name, 
+  diameter, 
   description,
   orbitalPeriod,
-  rotationPeriod,
-  resetKey
-}: {
-  position: [number, number, number];
+  rotationPeriod
+}: { 
+  position: [number, number, number]; 
   color: string;
   name: string;
   diameter: number;
   description: string;
   orbitalPeriod: number;
   rotationPeriod: number;
-  resetKey: number;
 }) {
   const orbitRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
@@ -260,39 +253,73 @@ function Planet3D({
   const texture = createTexturePattern();
   const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused } = useSettings();
 
-  // Store initial position and angle
-  const initialPosition = useRef<[number, number, number]>([position[0], 0, 0]);
+  // Store initial angle
   const angleRef = useRef(0);
+  const lastSpeedRef = useRef(orbitSpeedMultiplier);
+  const [isResetting, setIsResetting] = useState(false);
+  const targetAngleRef = useRef(0);
 
   // Calculate relative speeds
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
 
-  // Reset handler
   useEffect(() => {
-    if (orbitRef.current) {
-      orbitRef.current.position.set(initialPosition.current[0], 0, 0);
-      angleRef.current = 0;
+    if (orbitSpeedMultiplier !== lastSpeedRef.current) {
+      // Store current angle as target for smooth transition
+      if (orbitRef.current) {
+        const currentX = orbitRef.current.position.x;
+        const currentZ = orbitRef.current.position.z;
+        targetAngleRef.current = Math.atan2(currentZ, currentX);
+        setIsResetting(true);
+      }
+      lastSpeedRef.current = orbitSpeedMultiplier;
     }
-  }, [resetKey]); // Reset when resetKey changes
+  }, [orbitSpeedMultiplier]);
 
-  useFrame(() => {
-    if (!orbitRef.current || !planetRef.current || isSimulationPaused) return;
+  useFrame((state) => {
+    if (planetRef.current && orbitRef.current && !isSimulationPaused) {
+      // Handle planet rotation
+      const rotationDirection = rotationPeriod < 0 ? -1 : 1;
+      planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
 
-    // Handle planet rotation
-    const rotationDirection = rotationPeriod < 0 ? -1 : 1;
-    planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
+      const orbitRadius = position[0];
 
-    // Handle orbital motion
-    const orbitRadius = position[0];
-    angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * 0.016;
+      if (isResetting) {
+        // Smoothly interpolate to target angle
+        const currentX = orbitRef.current.position.x;
+        const currentZ = orbitRef.current.position.z;
+        const currentAngle = Math.atan2(currentZ, currentX);
 
-    orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
-    orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
+        // Calculate the shortest path to target angle
+        let angleDiff = targetAngleRef.current - currentAngle;
+        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+        // Smoothly interpolate
+        const t = 0.1; // Adjust for faster/slower transition
+        const newAngle = currentAngle + angleDiff * t;
+
+        orbitRef.current.position.x = Math.cos(newAngle) * orbitRadius;
+        orbitRef.current.position.z = Math.sin(newAngle) * orbitRadius;
+
+        // Check if we're close enough to target
+        if (Math.abs(angleDiff) < 0.01) {
+          setIsResetting(false);
+          angleRef.current = newAngle;
+        }
+      } else {
+        // Normal orbital motion
+        const time = state.clock.getElapsedTime();
+        angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * 0.016; // Assuming 60fps
+
+        orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
+        orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
+      }
+    }
   });
 
   // Scale factor to make planets visible while maintaining relative sizes
-  const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8));
+  const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8)); // Earth's diameter as reference
 
   return (
     <group ref={orbitRef}>
@@ -302,41 +329,43 @@ function Planet3D({
         onPointerOut={() => setHovered(false)}
       >
         <sphereGeometry args={[scaleFactor, 32, 32]} />
-        <meshStandardMaterial
-          color={color}
+        <meshStandardMaterial 
+          color={color} 
           map={texture}
           metalness={0.2}
           roughness={0.8}
         />
       </mesh>
-      <Billboard
-        follow={true}
-        lockX={false}
-        lockY={false}
-        lockZ={false}
-      >
-        <Text
-          position={[0, scaleFactor + 0.5, 0]}
-          fontSize={0.8}
-          color="white"
-          anchorX="center"
-          anchorY="bottom"
+      <group>
+        <Billboard
+          follow={true}
+          lockX={false}
+          lockY={false}
+          lockZ={false}
         >
-          {name}
-        </Text>
-      </Billboard>
-      {hovered && (
-        <Html position={[scaleFactor + 1, 0, 0]}>
-          <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
-            <h3 className="font-bold mb-1">{name}</h3>
-            <p className="text-sm">{description}</p>
-            <div className="mt-1 text-xs">
-              <div>Diameter: {diameter.toLocaleString()} km</div>
-              <div>Orbital Period: {orbitalPeriod} Earth days</div>
+          <Text
+            position={[0, scaleFactor + 0.5, 0]}
+            fontSize={0.8}
+            color="white"
+            anchorX="center"
+            anchorY="bottom"
+          >
+            {name}
+          </Text>
+        </Billboard>
+        {hovered && (
+          <Html position={[scaleFactor + 1, 0, 0]}>
+            <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
+              <h3 className="font-bold mb-1">{name}</h3>
+              <p className="text-sm">{description}</p>
+              <div className="mt-1 text-xs">
+                <div>Diameter: {diameter.toLocaleString()} km</div>
+                <div>Orbital Period: {orbitalPeriod} Earth days</div>
+              </div>
             </div>
-          </div>
-        </Html>
-      )}
+          </Html>
+        )}
+      </group>
     </group>
   );
 }
@@ -376,16 +405,10 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
     "#3333cc", // Neptune
   ];
 
-  const [rotationSpeedMultiplier, setRotationSpeedMultiplier] = useState(1);
-  const [orbitSpeedMultiplier, setOrbitSpeedMultiplier] = useState(1);
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
-  const [resetCount, setResetCount] = useState(0);
 
-  const resetOrbits = () => {
-    setResetCount(prev => prev + 1);
-    setIsSimulationPaused(true);
-    setRotationSpeedMultiplier(1);
-    setOrbitSpeedMultiplier(1);
+  const toggleSimulationPause = () => {
+    setIsSimulationPaused(!isSimulationPaused);
   };
 
   // Calculate scaling factor for distances
@@ -397,13 +420,10 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   return (
     <SettingsContext.Provider value={{
-      rotationSpeedMultiplier,
-      orbitSpeedMultiplier,
+      rotationSpeedMultiplier: 1,
+      orbitSpeedMultiplier: 1,
       isSimulationPaused,
-      setIsSimulationPaused,
-      setRotationSpeedMultiplier,
-      setOrbitSpeedMultiplier,
-      resetOrbits,
+      toggleSimulationPause
     }}>
       <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
         <CameraAnimation />
@@ -414,8 +434,8 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
         <Sun />
 
         {planets.map((planet) => (
-          <OrbitalRing
-            key={`ring-${planet.id}`}
+          <OrbitalRing 
+            key={`ring-${planet.id}`} 
             radius={distanceScale(planet.distance)}
             planet={planet}
           />
@@ -423,7 +443,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
         {planets.map((planet, index) => (
           <Planet3D
-            key={`${planet.id}-${resetCount}`}
+            key={planet.id}
             position={[distanceScale(planet.distance), 0, 0]}
             color={colors[index]}
             name={planet.name}
@@ -431,13 +451,12 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
             description={planet.description}
             orbitalPeriod={planet.orbitalPeriod}
             rotationPeriod={planet.rotationPeriod}
-            resetKey={resetCount}
           />
         ))}
 
-        <OrbitControls
-          enableZoom={true}
-          enablePan={true}
+        <OrbitControls 
+          enableZoom={true} 
+          enablePan={true} 
           enableRotate={true}
           maxDistance={150}
           minDistance={20}
