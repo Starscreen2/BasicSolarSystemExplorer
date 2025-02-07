@@ -27,14 +27,28 @@ export class DatabaseStorage implements IStorage {
       log(`Cleared existing planets data`, "storage");
 
       log(`Initializing planets data with ${planetData.length} planets`, "storage");
+
+      // Initialize all planets
       for (const planet of planetData) {
         try {
-          await this.createPlanet(planet);
-          log(`Created planet: ${planet.name}`, "storage");
+          const created = await this.createPlanet(planet);
+          log(`Created planet: ${created.name}`, "storage");
         } catch (error) {
           log(`Error creating planet ${planet.name}: ${error}`, "error");
+          // Retry with explicit type conversion for distance
+          try {
+            const retryPlanet = {
+              ...planet,
+              distance: Number(planet.distance)
+            };
+            const created = await this.createPlanet(retryPlanet);
+            log(`Successfully created planet on retry: ${created.name}`, "storage");
+          } catch (retryError) {
+            log(`Failed to create planet ${planet.name} even after retry: ${retryError}`, "error");
+          }
         }
       }
+
       log("Finished initializing planets data", "storage");
 
       const existingQuizzes = await this.getAllQuizzes();
