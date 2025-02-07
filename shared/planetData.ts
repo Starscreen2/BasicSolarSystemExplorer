@@ -5,7 +5,7 @@ export const planetData: InsertPlanet[] = [
     name: "Mercury",
     description: "The smallest and innermost planet in the Solar System, Mercury is a rocky world with extreme temperatures.",
     diameter: 4879,
-    distance: 57900000,
+    distance: BigInt(57900000),
     temperature: 167,
     imageUrl: "https://images.unsplash.com/photo-1614732414444-096e5f1122d5",
     facts: [
@@ -20,7 +20,7 @@ export const planetData: InsertPlanet[] = [
     name: "Venus",
     description: "Often called Earth's sister planet due to their similar size, Venus has a toxic atmosphere and extreme surface pressure.",
     diameter: 12104,
-    distance: 108200000,
+    distance: BigInt(108200000),
     temperature: 464,
     imageUrl: "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6",
     facts: [
@@ -35,7 +35,7 @@ export const planetData: InsertPlanet[] = [
     name: "Earth",
     description: "Our home planet is the only known world to support life. Its distance from the Sun and physical properties make it perfect for living organisms.",
     diameter: 12742,
-    distance: 149600000,
+    distance: BigInt(149600000),
     temperature: 15,
     imageUrl: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4",
     facts: [
@@ -50,7 +50,7 @@ export const planetData: InsertPlanet[] = [
     name: "Mars",
     description: "Often called the Red Planet, Mars has long captured human imagination. It's a cold desert world with signs of ancient water flows.",
     diameter: 6779,
-    distance: 227900000,
+    distance: BigInt(227900000),
     temperature: -63,
     imageUrl: "https://images.unsplash.com/photo-1614728263952-84ea256f9679",
     facts: [
@@ -65,7 +65,7 @@ export const planetData: InsertPlanet[] = [
     name: "Jupiter",
     description: "The largest planet in our solar system, Jupiter is a gas giant with a complex system of moons and a distinctive Great Red Spot.",
     diameter: 139820,
-    distance: 778500000,
+    distance: BigInt(778500000),
     temperature: -110,
     imageUrl: "https://images.unsplash.com/photo-1614728894747-a83421789f10",
     facts: [
@@ -80,7 +80,7 @@ export const planetData: InsertPlanet[] = [
     name: "Saturn",
     description: "Known for its spectacular ring system, Saturn is a gas giant planet with a complex atmosphere and numerous moons.",
     diameter: 116460,
-    distance: 1434000000,
+    distance: BigInt(1434000000),
     temperature: -140,
     imageUrl: "https://images.unsplash.com/photo-1614314107768-6018061c7932",
     facts: [
@@ -95,7 +95,7 @@ export const planetData: InsertPlanet[] = [
     name: "Uranus",
     description: "Uranus is an ice giant planet with a unique sideways rotation and a system of thin, dark rings.",
     diameter: 50724,
-    distance: 2871000000,
+    distance: BigInt(2871000000),
     temperature: -195,
     imageUrl: "https://images.unsplash.com/photo-1614313914396-5b56fb6a2827",
     facts: [
@@ -110,7 +110,7 @@ export const planetData: InsertPlanet[] = [
     name: "Neptune",
     description: "The windiest planet in our solar system, Neptune is a distant ice giant with supersonic storms and a dynamic atmosphere.",
     diameter: 49244,
-    distance: 4495000000,
+    distance: BigInt(4495000000),
     temperature: -200,
     imageUrl: "https://images.unsplash.com/photo-1614313914157-4211a33c53d2",
     facts: [
