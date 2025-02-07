@@ -13,12 +13,16 @@ const SettingsContext = createContext<{
   rotationSpeedMultiplier: number;
   orbitSpeedMultiplier: number;
   isSimulationPaused: boolean;
+  shouldReset: boolean;
   toggleSimulationPause: () => void;
+  resetOrbits: () => void;
 }>({
   rotationSpeedMultiplier: 1,
   orbitSpeedMultiplier: 1,
   isSimulationPaused: false,
+  shouldReset: false,
   toggleSimulationPause: () => {},
+  resetOrbits: () => {},
 });
 
 function useSettings() {
@@ -56,10 +60,10 @@ function createTexturePattern() {
   return new THREE.CanvasTexture(canvas);
 }
 
-function OrbitalRing({ 
-  radius, 
-  planet 
-}: { 
+function OrbitalRing({
+  radius,
+  planet
+}: {
   radius: number;
   planet: Planet;
 }) {
@@ -105,7 +109,7 @@ function OrbitalRing({
 
   return (
     <group>
-      <mesh 
+      <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         onPointerOver={(e) => {
           e.stopPropagation();
@@ -119,10 +123,10 @@ function OrbitalRing({
         ref={ringRef}
       >
         <ringGeometry args={[radius, radius + 0.4, 128]} />
-        <meshBasicMaterial 
-          color={hovered ? "#6f8fff" : "#ffffff"} 
-          opacity={hovered ? 0.5 : 0.3} 
-          transparent={true} 
+        <meshBasicMaterial
+          color={hovered ? "#6f8fff" : "#ffffff"}
+          opacity={hovered ? 0.5 : 0.3}
+          transparent={true}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -187,9 +191,9 @@ function Sun() {
         onPointerOut={() => setHovered(false)}
       >
         <sphereGeometry args={[2, 32, 32]} />
-        <meshStandardMaterial 
-          color="#ffdd00" 
-          emissive="#ffdd00" 
+        <meshStandardMaterial
+          color="#ffdd00"
+          emissive="#ffdd00"
           emissiveIntensity={0.5}
           map={texture}
           metalness={0.3}
@@ -230,16 +234,16 @@ function Sun() {
   );
 }
 
-function Planet3D({ 
-  position, 
-  color, 
-  name, 
-  diameter, 
+function Planet3D({
+  position,
+  color,
+  name,
+  diameter,
   description,
   orbitalPeriod,
   rotationPeriod
-}: { 
-  position: [number, number, number]; 
+}: {
+  position: [number, number, number];
   color: string;
   name: string;
   diameter: number;
@@ -251,30 +255,25 @@ function Planet3D({
   const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
-  const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused } = useSettings();
+  const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused, shouldReset } = useSettings();
 
-  // Store initial angle
+  // Store initial angle and position
   const angleRef = useRef(0);
-  const lastSpeedRef = useRef(orbitSpeedMultiplier);
-  const [isResetting, setIsResetting] = useState(false);
-  const targetAngleRef = useRef(0);
+  const initialPosition = useRef<[number, number, number]>(position);
+
+  // Reset position when shouldReset is true
+  useEffect(() => {
+    if (shouldReset && orbitRef.current) {
+      angleRef.current = 0;
+      orbitRef.current.position.x = initialPosition.current[0];
+      orbitRef.current.position.y = initialPosition.current[1];
+      orbitRef.current.position.z = initialPosition.current[2];
+    }
+  }, [shouldReset]);
 
   // Calculate relative speeds
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
-
-  useEffect(() => {
-    if (orbitSpeedMultiplier !== lastSpeedRef.current) {
-      // Store current angle as target for smooth transition
-      if (orbitRef.current) {
-        const currentX = orbitRef.current.position.x;
-        const currentZ = orbitRef.current.position.z;
-        targetAngleRef.current = Math.atan2(currentZ, currentX);
-        setIsResetting(true);
-      }
-      lastSpeedRef.current = orbitSpeedMultiplier;
-    }
-  }, [orbitSpeedMultiplier]);
 
   useFrame((state) => {
     if (planetRef.current && orbitRef.current && !isSimulationPaused) {
@@ -284,37 +283,12 @@ function Planet3D({
 
       const orbitRadius = position[0];
 
-      if (isResetting) {
-        // Smoothly interpolate to target angle
-        const currentX = orbitRef.current.position.x;
-        const currentZ = orbitRef.current.position.z;
-        const currentAngle = Math.atan2(currentZ, currentX);
 
-        // Calculate the shortest path to target angle
-        let angleDiff = targetAngleRef.current - currentAngle;
-        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+      // Normal orbital motion
+      angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * 0.016;
 
-        // Smoothly interpolate
-        const t = 0.1; // Adjust for faster/slower transition
-        const newAngle = currentAngle + angleDiff * t;
-
-        orbitRef.current.position.x = Math.cos(newAngle) * orbitRadius;
-        orbitRef.current.position.z = Math.sin(newAngle) * orbitRadius;
-
-        // Check if we're close enough to target
-        if (Math.abs(angleDiff) < 0.01) {
-          setIsResetting(false);
-          angleRef.current = newAngle;
-        }
-      } else {
-        // Normal orbital motion
-        const time = state.clock.getElapsedTime();
-        angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * 0.016; // Assuming 60fps
-
-        orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
-        orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
-      }
+      orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
+      orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
     }
   });
 
@@ -329,8 +303,8 @@ function Planet3D({
         onPointerOut={() => setHovered(false)}
       >
         <sphereGeometry args={[scaleFactor, 32, 32]} />
-        <meshStandardMaterial 
-          color={color} 
+        <meshStandardMaterial
+          color={color}
           map={texture}
           metalness={0.2}
           roughness={0.8}
@@ -406,9 +380,16 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   ];
 
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
+  const [shouldReset, setShouldReset] = useState(false);
 
   const toggleSimulationPause = () => {
     setIsSimulationPaused(!isSimulationPaused);
+  };
+
+  const resetOrbits = () => {
+    setShouldReset(true);
+    // Reset the flag after a short delay
+    setTimeout(() => setShouldReset(false), 100);
   };
 
   // Calculate scaling factor for distances
@@ -423,45 +404,65 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
       rotationSpeedMultiplier: 1,
       orbitSpeedMultiplier: 1,
       isSimulationPaused,
-      toggleSimulationPause
+      shouldReset,
+      toggleSimulationPause,
+      resetOrbits
     }}>
-      <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
-        <CameraAnimation />
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
+      <div className="relative">
+        {/* Add control buttons */}
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
+          <button
+            onClick={toggleSimulationPause}
+            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md backdrop-blur-sm transition-all"
+          >
+            {isSimulationPaused ? "Resume" : "Pause"}
+          </button>
+          <button
+            onClick={resetOrbits}
+            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md backdrop-blur-sm transition-all"
+          >
+            Reset
+          </button>
+        </div>
 
-        <Sun />
+        <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
+          <CameraAnimation />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} intensity={1} />
+          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
 
-        {planets.map((planet) => (
-          <OrbitalRing 
-            key={`ring-${planet.id}`} 
-            radius={distanceScale(planet.distance)}
-            planet={planet}
+          <Sun />
+
+          {planets.map((planet) => (
+            <OrbitalRing
+              key={`ring-${planet.id}`}
+              radius={distanceScale(planet.distance)}
+              planet={planet}
+            />
+          ))}
+
+          {planets.map((planet, index) => (
+            <Planet3D
+              key={planet.id}
+              position={[distanceScale(planet.distance), 0, 0]}
+              color={colors[index]}
+              name={planet.name}
+              diameter={planet.diameter}
+              description={planet.description}
+              orbitalPeriod={planet.orbitalPeriod}
+              rotationPeriod={planet.rotationPeriod}
+            />
+          ))}
+
+          <OrbitControls
+            enableZoom={true}
+            enablePan={true}
+            enableRotate={true}
+            maxDistance={150}
+            minDistance={20}
           />
-        ))}
-
-        {planets.map((planet, index) => (
-          <Planet3D
-            key={planet.id}
-            position={[distanceScale(planet.distance), 0, 0]}
-            color={colors[index]}
-            name={planet.name}
-            diameter={planet.diameter}
-            description={planet.description}
-            orbitalPeriod={planet.orbitalPeriod}
-            rotationPeriod={planet.rotationPeriod}
-          />
-        ))}
-
-        <OrbitControls 
-          enableZoom={true} 
-          enablePan={true} 
-          enableRotate={true}
-          maxDistance={150}
-          minDistance={20}
-        />
-      </Canvas>
+        </Canvas>
+      </div>
     </SettingsContext.Provider>
   );
 }
