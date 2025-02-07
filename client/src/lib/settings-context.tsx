@@ -1,24 +1,20 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface SettingsContextType {
-  orbitSpeedMultiplier: number;
   rotationSpeedMultiplier: number;
-  setOrbitSpeedMultiplier: (speed: number) => void;
   setRotationSpeedMultiplier: (speed: number) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [orbitSpeedMultiplier, setOrbitSpeedMultiplier] = useState(1);
   const [rotationSpeedMultiplier, setRotationSpeedMultiplier] = useState(1);
 
   return (
     <SettingsContext.Provider
       value={{
-        orbitSpeedMultiplier,
         rotationSpeedMultiplier,
-        setOrbitSpeedMultiplier,
         setRotationSpeedMultiplier,
       }}
     >
