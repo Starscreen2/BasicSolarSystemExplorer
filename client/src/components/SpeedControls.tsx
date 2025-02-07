@@ -11,6 +11,8 @@ export default function SpeedControls() {
     rotationSpeedMultiplier,
     isSimulationPaused,
     setIsSimulationPaused,
+    setOrbitSpeedMultiplier,
+    setRotationSpeedMultiplier,
     resetOrbits,
   } = useSettings();
 
@@ -22,6 +24,8 @@ export default function SpeedControls() {
 
   const resetAll = () => {
     resetOrbits();
+    setOrbitSpeedMultiplier(1);
+    setRotationSpeedMultiplier(1);
   };
 
   if (!isOpen) {

@@ -14,12 +14,16 @@ const SettingsContext = createContext<{
   orbitSpeedMultiplier: number;
   isSimulationPaused: boolean;
   setIsSimulationPaused: (paused: boolean) => void;
+  setRotationSpeedMultiplier: (speed: number) => void;
+  setOrbitSpeedMultiplier: (speed: number) => void;
   resetOrbits: () => void;
 }>({
   rotationSpeedMultiplier: 1,
   orbitSpeedMultiplier: 1,
   isSimulationPaused: false,
   setIsSimulationPaused: () => {},
+  setRotationSpeedMultiplier: () => {},
+  setOrbitSpeedMultiplier: () => {},
   resetOrbits: () => {},
 });
 
@@ -239,7 +243,8 @@ function Planet3D({
   diameter,
   description,
   orbitalPeriod,
-  rotationPeriod
+  rotationPeriod,
+  resetKey
 }: {
   position: [number, number, number];
   color: string;
@@ -248,6 +253,7 @@ function Planet3D({
   description: string;
   orbitalPeriod: number;
   rotationPeriod: number;
+  resetKey: number;
 }) {
   const orbitRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
@@ -263,6 +269,14 @@ function Planet3D({
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
 
+  // Reset handler
+  useEffect(() => {
+    if (orbitRef.current) {
+      orbitRef.current.position.set(initialPosition.current[0], 0, 0);
+      angleRef.current = 0;
+    }
+  }, [resetKey]); // Reset when resetKey changes
+
   useFrame((state) => {
     if (!orbitRef.current || !planetRef.current || isSimulationPaused) return;
 
@@ -277,14 +291,6 @@ function Planet3D({
     orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
     orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
   });
-
-  // Reset handler
-  useEffect(() => {
-    if (orbitRef.current) {
-      orbitRef.current.position.set(initialPosition.current[0], 0, 0);
-      angleRef.current = 0;
-    }
-  }, []); // Empty dependency array means this only runs on mount
 
   // Scale factor to make planets visible while maintaining relative sizes
   const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8));
@@ -373,6 +379,8 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
     "#3333cc", // Neptune
   ];
 
+  const [rotationSpeedMultiplier, setRotationSpeedMultiplier] = useState(1);
+  const [orbitSpeedMultiplier, setOrbitSpeedMultiplier] = useState(1);
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
   const [resetCount, setResetCount] = useState(0);
 
@@ -390,10 +398,12 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   return (
     <SettingsContext.Provider value={{
-      rotationSpeedMultiplier: 1,
-      orbitSpeedMultiplier: 1,
+      rotationSpeedMultiplier,
+      orbitSpeedMultiplier,
       isSimulationPaused,
       setIsSimulationPaused,
+      setRotationSpeedMultiplier,
+      setOrbitSpeedMultiplier,
       resetOrbits,
     }}>
       <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
@@ -414,7 +424,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
         {planets.map((planet, index) => (
           <Planet3D
-            key={`${planet.id}-${resetCount}`} // Add resetCount to force remount
+            key={`${planet.id}-${resetCount}`}
             position={[distanceScale(planet.distance), 0, 0]}
             color={colors[index]}
             name={planet.name}
@@ -422,6 +432,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
             description={planet.description}
             orbitalPeriod={planet.orbitalPeriod}
             rotationPeriod={planet.rotationPeriod}
+            resetKey={resetCount}
           />
         ))}
 
