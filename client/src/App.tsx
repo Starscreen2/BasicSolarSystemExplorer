@@ -6,6 +6,7 @@ import Navigation from "@/components/Navigation";
 import Home from "@/pages/Home";
 import PlanetDetail from "@/pages/PlanetDetail";
 import Quiz from "@/pages/Quiz";
+import SolarSystemBuilder from "@/pages/SolarSystemBuilder";
 import NotFound from "@/pages/not-found";
 import { SettingsProvider } from "@/lib/settings-context";
 import SpeedControls from "@/components/SpeedControls";
@@ -27,6 +28,13 @@ function Router() {
         {() => (
           <WithErrorBoundary>
             <Quiz />
+          </WithErrorBoundary>
+        )}
+      </Route>
+      <Route path="/builder">
+        {() => (
+          <WithErrorBoundary>
+            <SolarSystemBuilder />
           </WithErrorBoundary>
         )}
       </Route>

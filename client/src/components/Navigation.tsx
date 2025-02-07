@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { Gamepad2, Brain } from "lucide-react";
+import { Gamepad2, Brain, Construction } from "lucide-react";
 
 export default function Navigation() {
   return (
@@ -24,10 +24,10 @@ export default function Navigation() {
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/games">
+              <Link href="/builder">
                 <div className="flex items-center gap-2 cursor-pointer hover:text-primary">
-                  <Gamepad2 className="h-4 w-4" />
-                  <span>Games</span>
+                  <Construction className="h-4 w-4" />
+                  <span>System Builder</span>
                 </div>
               </Link>
             </NavigationMenuItem>
