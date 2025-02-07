@@ -113,24 +113,25 @@ function OrbitalRing({
           }}
         >
           <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
-            <h3 className="font-bold mb-1">{planet.name}</h3>
-            <p className="text-sm">{planet.description}</p>
-            <div className="mt-1 text-xs space-y-1">
-              <div>Diameter: {planet.diameter.toLocaleString()} km</div>
-              <div>Distance from Sun: {Number(planet.distance).toLocaleString()} km</div>
-              <div>Temperature: {planet.temperature}°C</div>
+            <h3 className="font-bold mb-1">{planet.name}'s Orbit</h3>
+            <p className="text-sm">Distance from Sun: {Number(planet.distance).toLocaleString()} km</p>
 
-              {/* Ring Information Section */}
-              {planetRings && (
-                <div className="mt-2 pt-2 border-t border-white/20">
-                  <div className="font-semibold text-blue-300">Ring System</div>
+            {/* Ring Information Section */}
+            {planetRings ? (
+              <div className="mt-2 pt-2 border-t border-white/20">
+                <div className="font-semibold text-blue-300">Ring System</div>
+                <div className="text-xs space-y-1">
                   <div>Composition: {planetRings.composition}</div>
                   <div>Width: {planetRings.width}</div>
                   <div>Discovery: {planetRings.discovery}</div>
-                  <div className="mt-1 italic text-xs text-blue-200">{planetRings.details}</div>
+                  <div className="mt-1 italic text-blue-200">{planetRings.details}</div>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="mt-2 pt-2 border-t border-white/20 text-xs italic">
+                This planet does not have a prominent ring system.
+              </div>
+            )}
           </div>
         </Html>
       )}
