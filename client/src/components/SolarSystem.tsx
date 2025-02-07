@@ -222,10 +222,11 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   // Calculate scaling factor for distances
   const maxDistance = Math.max(...planets.map(p => p.distance));
-  // Use a logarithmic scale to compress the distances of outer planets
+  // Use a modified logarithmic scale to space out planets more evenly
   const distanceScale = (distance: number) => {
-    const baseScale = 75 / maxDistance;
-    return Math.log10(distance + 1) * baseScale * 15; // Adjusted multiplier for better visualization
+    const baseScale = 40 / Math.log10(maxDistance + 1); // Reduce base scale for better initial spacing
+    const minDistance = 5; // Minimum distance to prevent overlap
+    return minDistance + Math.log10(distance + 1) * baseScale;
   };
 
   return (
