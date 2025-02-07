@@ -40,12 +40,50 @@ function createTexturePattern() {
   return new THREE.CanvasTexture(canvas);
 }
 
-function OrbitalRing({ radius }: { radius: number }) {
+function OrbitalRing({ 
+  radius, 
+  planet 
+}: { 
+  radius: number;
+  planet: {
+    name: string;
+    description: string;
+    diameter: number;
+    orbitalPeriod: number;
+  };
+}) {
+  const [hovered, setHovered] = useState(false);
+  const ringRef = useRef<THREE.Mesh>(null);
+
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[radius, radius + 0.1, 64]} />
-      <meshBasicMaterial color="#ffffff" opacity={0.3} transparent={true} side={THREE.DoubleSide} /> {/* Increased opacity */}
-    </mesh>
+    <group>
+      <mesh 
+        rotation={[-Math.PI / 2, 0, 0]}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+        ref={ringRef}
+      >
+        <ringGeometry args={[radius, radius + 0.2, 128]} />
+        <meshBasicMaterial 
+          color={hovered ? "#6f8fff" : "#ffffff"} 
+          opacity={hovered ? 0.5 : 0.3} 
+          transparent={true} 
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {hovered && (
+        <Html position={[radius + 2, 2, 0]}>
+          <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
+            <h3 className="font-bold mb-1">{planet.name}</h3>
+            <p className="text-sm">{planet.description}</p>
+            <div className="mt-1 text-xs">
+              <div>Diameter: {planet.diameter.toLocaleString()} km</div>
+              <div>Orbital Period: {planet.orbitalPeriod} Earth days</div>
+            </div>
+          </div>
+        </Html>
+      )}
+    </group>
   );
 }
 
@@ -265,13 +303,10 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   ];
 
   // Calculate scaling factor for distances
-  const maxDistance = Math.max(...planets.map(p => p.distance));
-  // Linear spacing with fixed gaps between planets
-  const distanceScale = (distance: number) => {
-    // Get the index of the current planet based on its distance
+  const maxDistance = Math.max(...planets.map(p => Number(p.distance)));
+  const distanceScale = (distance: bigint) => {
     const planetIndex = planets.findIndex(p => p.distance === distance);
-    // Create even spacing with 5 units between each planet
-    return (planetIndex + 1) * 7; // Start at 7 units and increment by 7 for each planet
+    return (planetIndex + 1) * 7;
   };
 
   return (
@@ -282,9 +317,13 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
       <Sun />
 
-      {/* Orbital Rings */}
+      {/* Orbital Rings with planet info */}
       {planets.map((planet) => (
-        <OrbitalRing key={`ring-${planet.id}`} radius={distanceScale(planet.distance)} />
+        <OrbitalRing 
+          key={`ring-${planet.id}`} 
+          radius={distanceScale(planet.distance)}
+          planet={planet}
+        />
       ))}
 
       {/* Planets */}
