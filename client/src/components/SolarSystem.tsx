@@ -138,7 +138,7 @@ function Planet3D({
   // Calculate relative speeds
   // Base speed multiplier to make orbits visible (1 Earth year = ~6 seconds)
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 30); // Convert to radians per frame
-  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 30);
+  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3); // 10x faster rotation
 
   useFrame((state) => {
     if (planetRef.current && orbitRef.current) {
