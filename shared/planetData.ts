@@ -120,5 +120,20 @@ export const planetData: InsertPlanet[] = [
     ],
     orbitalPeriod: 60190,
     rotationPeriod: 0.67
+  },
+  {
+    name: "Pluto",
+    description: "Although classified as a dwarf planet since 2006, Pluto remains one of the most fascinating objects in our solar system.",
+    diameter: 2377,
+    distance: BigInt(5906380000),
+    temperature: -230,
+    imageUrl: "https://images.unsplash.com/photo-1614313915167-d9d971c4d9df",
+    facts: [
+      "Pluto was reclassified as a dwarf planet in 2006",
+      "It has five known moons, with Charon being the largest",
+      "Its orbit is highly elliptical and tilted"
+    ],
+    orbitalPeriod: 90560,
+    rotationPeriod: -6.39
   }
 ];

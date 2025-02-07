@@ -35,17 +35,6 @@ export class DatabaseStorage implements IStorage {
           log(`Created planet: ${created.name}`, "storage");
         } catch (error) {
           log(`Error creating planet ${planet.name}: ${error}`, "error");
-          // Retry with explicit type conversion for distance
-          try {
-            const retryPlanet = {
-              ...planet,
-              distance: Number(planet.distance)
-            };
-            const created = await this.createPlanet(retryPlanet);
-            log(`Successfully created planet on retry: ${created.name}`, "storage");
-          } catch (retryError) {
-            log(`Failed to create planet ${planet.name} even after retry: ${retryError}`, "error");
-          }
         }
       }
 
