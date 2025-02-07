@@ -7,7 +7,7 @@ export const planets = pgTable("planets", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   diameter: integer("diameter").notNull(),
-  distance: bigint("distance", { mode: "number" }).notNull(),
+  distance: bigint("distance", { mode: "bigint" }).notNull(),
   temperature: integer("temperature").notNull(),
   imageUrl: text("image_url").notNull(),
   facts: text("facts").array().notNull(),
