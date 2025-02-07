@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, index, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, index, real, bigint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -7,7 +7,7 @@ export const planets = pgTable("planets", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   diameter: integer("diameter").notNull(),
-  distance: integer("distance").notNull(),
+  distance: bigint("distance", { mode: "number" }).notNull(),
   temperature: integer("temperature").notNull(),
   imageUrl: text("image_url").notNull(),
   facts: text("facts").array().notNull(),

@@ -222,11 +222,12 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   // Calculate scaling factor for distances
   const maxDistance = Math.max(...planets.map(p => p.distance));
-  // Use a modified logarithmic scale to space out planets more evenly
+  // Linear spacing with fixed gaps between planets
   const distanceScale = (distance: number) => {
-    const baseScale = 40 / Math.log10(maxDistance + 1); // Reduce base scale for better initial spacing
-    const minDistance = 5; // Minimum distance to prevent overlap
-    return minDistance + Math.log10(distance + 1) * baseScale;
+    // Get the index of the current planet based on its distance
+    const planetIndex = planets.findIndex(p => p.distance === distance);
+    // Create even spacing with 5 units between each planet
+    return (planetIndex + 1) * 7; // Start at 7 units and increment by 7 for each planet
   };
 
   return (
