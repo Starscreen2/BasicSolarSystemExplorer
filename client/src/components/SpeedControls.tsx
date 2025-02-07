@@ -7,12 +7,15 @@ import { useState } from "react";
 
 export default function SpeedControls() {
   const {
+    orbitSpeedMultiplier,
     rotationSpeedMultiplier,
+    setOrbitSpeedMultiplier,
     setRotationSpeedMultiplier,
   } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
 
   const resetSpeeds = () => {
+    setOrbitSpeedMultiplier(1);
     setRotationSpeedMultiplier(1);
   };
 
@@ -39,6 +42,21 @@ export default function SpeedControls() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm">Orbital Speed</label>
+            <Slider
+              value={[orbitSpeedMultiplier]}
+              onValueChange={([value]) => setOrbitSpeedMultiplier(value)}
+              min={0}
+              max={3}
+              step={0.1}
+              className="cursor-pointer"
+            />
+            <div className="text-xs text-muted-foreground">
+              Current: {orbitSpeedMultiplier.toFixed(1)}x
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm">Rotation Speed</label>
             <Slider
