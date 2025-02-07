@@ -22,16 +22,15 @@ export class DatabaseStorage implements IStorage {
 
   private async initializeData() {
     try {
-      const allPlanets = await db.select().from(planets).orderBy(planets.distance);
-      log(`Found ${allPlanets.length} existing planets in database`, "storage");
+      // Drop existing planets to ensure clean state
+      await db.delete(planets);
+      log(`Cleared existing planets data`, "storage");
 
-      if (allPlanets.length === 0) {
-        log(`Initializing planets data with ${planetData.length} planets`, "storage");
-        for (const planet of planetData) {
-          await this.createPlanet(planet);
-        }
-        log("Finished initializing planets data", "storage");
+      log(`Initializing planets data with ${planetData.length} planets`, "storage");
+      for (const planet of planetData) {
+        await this.createPlanet(planet);
       }
+      log("Finished initializing planets data", "storage");
 
       const existingQuizzes = await this.getAllQuizzes();
       if (existingQuizzes.length === 0) {

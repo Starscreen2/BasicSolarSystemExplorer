@@ -222,8 +222,11 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   // Calculate scaling factor for distances
   const maxDistance = Math.max(...planets.map(p => p.distance));
-  // Increase the scale factor to spread planets out more
-  const distanceScale = 75 / maxDistance; // Increased from 50 to 75 for even better spacing
+  // Use a logarithmic scale to compress the distances of outer planets
+  const distanceScale = (distance: number) => {
+    const baseScale = 75 / maxDistance;
+    return Math.log10(distance + 1) * baseScale * 15; // Adjusted multiplier for better visualization
+  };
 
   return (
     <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
@@ -235,14 +238,14 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
       {/* Orbital Rings */}
       {planets.map((planet) => (
-        <OrbitalRing key={`ring-${planet.id}`} radius={planet.distance * distanceScale} />
+        <OrbitalRing key={`ring-${planet.id}`} radius={distanceScale(planet.distance)} />
       ))}
 
       {/* Planets */}
       {planets.map((planet, index) => (
         <Planet3D
           key={planet.id}
-          position={[planet.distance * distanceScale, 0, 0]}
+          position={[distanceScale(planet.distance), 0, 0]}
           color={colors[index]}
           name={planet.name}
           diameter={planet.diameter}
@@ -256,8 +259,8 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
         enableZoom={true} 
         enablePan={true} 
         enableRotate={true}
-        maxDistance={150} // Increased from 100 to 150
-        minDistance={20} // Increased from 10 to 20
+        maxDistance={150}
+        minDistance={20}
       />
     </Canvas>
   );
