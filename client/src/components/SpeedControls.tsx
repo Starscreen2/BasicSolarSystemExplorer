@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { useSettings } from "@/lib/settings-context";
+import { useSettings } from "@/components/SolarSystem";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings2 } from "lucide-react";
 import { useState } from "react";
@@ -9,28 +9,19 @@ export default function SpeedControls() {
   const {
     orbitSpeedMultiplier,
     rotationSpeedMultiplier,
-    setOrbitSpeedMultiplier,
-    setRotationSpeedMultiplier,
-  } = useSettings();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const {
     isSimulationPaused,
     setIsSimulationPaused,
+    resetOrbits,
   } = useSettings();
 
-  const resetSpeeds = () => {
-    setOrbitSpeedMultiplier(1);
-    setRotationSpeedMultiplier(1);
-  };
+  const [isOpen, setIsOpen] = useState(false);
 
   const toggleSimulation = () => {
     setIsSimulationPaused(!isSimulationPaused);
   };
 
   const resetAll = () => {
-    resetSpeeds();
-    setIsSimulationPaused(false);
+    resetOrbits();
   };
 
   if (!isOpen) {

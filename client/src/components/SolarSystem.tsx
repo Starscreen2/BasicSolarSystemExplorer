@@ -13,17 +13,17 @@ const SettingsContext = createContext<{
   rotationSpeedMultiplier: number;
   orbitSpeedMultiplier: number;
   isSimulationPaused: boolean;
-  toggleSimulationPause: () => void;
+  setIsSimulationPaused: (paused: boolean) => void;
   resetOrbits: () => void;
 }>({
   rotationSpeedMultiplier: 1,
   orbitSpeedMultiplier: 1,
   isSimulationPaused: false,
-  toggleSimulationPause: () => {},
+  setIsSimulationPaused: () => {},
   resetOrbits: () => {},
 });
 
-function useSettings() {
+export function useSettings() {
   return useContext(SettingsContext);
 }
 
@@ -253,26 +253,15 @@ function Planet3D({
   const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
-  const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused, resetOrbits } = useSettings();
+  const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused } = useSettings();
 
-  // Store initial position
+  // Store initial position and angle
   const initialPosition = useRef<[number, number, number]>([position[0], 0, 0]);
-  const [isResetting, setIsResetting] = useState(false);
   const angleRef = useRef(0);
 
   // Calculate relative speeds
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
-
-  useEffect(() => {
-    // Reset to initial position when reset is triggered
-    if (isResetting && orbitRef.current) {
-      const targetPosition = initialPosition.current;
-      orbitRef.current.position.set(targetPosition[0], targetPosition[1], targetPosition[2]);
-      angleRef.current = 0;
-      setIsResetting(false);
-    }
-  }, [isResetting, resetOrbits]);
 
   useFrame((state) => {
     if (!orbitRef.current || !planetRef.current || isSimulationPaused) return;
@@ -283,15 +272,22 @@ function Planet3D({
 
     // Handle orbital motion
     const orbitRadius = position[0];
-    const time = state.clock.getElapsedTime();
     angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * 0.016;
 
     orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
     orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
   });
 
+  // Reset handler
+  useEffect(() => {
+    if (orbitRef.current) {
+      orbitRef.current.position.set(initialPosition.current[0], 0, 0);
+      angleRef.current = 0;
+    }
+  }, []); // Empty dependency array means this only runs on mount
+
   // Scale factor to make planets visible while maintaining relative sizes
-  const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8)); // Earth's diameter as reference
+  const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8));
 
   return (
     <group ref={orbitRef}>
@@ -378,15 +374,10 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   ];
 
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
-  const [resetTrigger, setResetTrigger] = useState(false);
-
-  const toggleSimulationPause = () => {
-    setIsSimulationPaused(!isSimulationPaused);
-  };
+  const [resetCount, setResetCount] = useState(0);
 
   const resetOrbits = () => {
-    setResetTrigger(prev => !prev);
-    // Optional: pause simulation when resetting
+    setResetCount(prev => prev + 1);
     setIsSimulationPaused(true);
   };
 
@@ -402,26 +393,9 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
       rotationSpeedMultiplier: 1,
       orbitSpeedMultiplier: 1,
       isSimulationPaused,
-      toggleSimulationPause,
+      setIsSimulationPaused,
       resetOrbits,
     }}>
-      <div className="absolute top-4 right-4 z-10 bg-black/80 p-4 rounded-lg">
-        <div className="flex flex-col gap-4">
-          <button
-            onClick={toggleSimulationPause}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white transition-colors"
-          >
-            {isSimulationPaused ? "Resume" : "Pause"} Simulation
-          </button>
-          <button
-            onClick={resetOrbits}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-md text-white transition-colors"
-          >
-            Reset Positions
-          </button>
-        </div>
-      </div>
-
       <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
         <CameraAnimation />
         <ambientLight intensity={0.5} />
@@ -440,7 +414,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
         {planets.map((planet, index) => (
           <Planet3D
-            key={planet.id}
+            key={`${planet.id}-${resetCount}`} // Add resetCount to force remount
             position={[distanceScale(planet.distance), 0, 0]}
             color={colors[index]}
             name={planet.name}
