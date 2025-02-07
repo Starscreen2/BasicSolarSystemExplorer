@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useSettings } from "@/components/SolarSystem";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings2 } from "lucide-react";
+import { Settings2, Pause, Play, RotateCcw } from "lucide-react";
 import { useState } from "react";
 
 export default function SpeedControls() {
@@ -18,20 +18,12 @@ export default function SpeedControls() {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const toggleSimulation = () => {
-    setIsSimulationPaused(!isSimulationPaused);
-  };
-
   const handleOrbitSpeedChange = (value: number[]) => {
     setOrbitSpeedMultiplier(value[0]);
   };
 
   const handleRotationSpeedChange = (value: number[]) => {
     setRotationSpeedMultiplier(value[0]);
-  };
-
-  const resetAll = () => {
-    resetOrbits();
   };
 
   if (!isOpen) {
@@ -91,12 +83,33 @@ export default function SpeedControls() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Button variant="secondary" size="sm" onClick={toggleSimulation} className="w-full">
-              {isSimulationPaused ? "Resume Simulation" : "Pause Simulation"}
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={() => setIsSimulationPaused(!isSimulationPaused)}
+              className="w-full flex items-center gap-2"
+            >
+              {isSimulationPaused ? (
+                <>
+                  <Play className="h-4 w-4" />
+                  Resume
+                </>
+              ) : (
+                <>
+                  <Pause className="h-4 w-4" />
+                  Pause
+                </>
+              )}
             </Button>
-            <Button variant="secondary" size="sm" onClick={resetAll} className="w-full">
-              Reset All
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={resetOrbits}
+              className="w-full flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reset
             </Button>
           </div>
         </div>
