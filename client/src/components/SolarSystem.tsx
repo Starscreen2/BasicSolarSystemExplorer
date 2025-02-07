@@ -46,11 +46,36 @@ function OrbitalRing({
   planet 
 }: { 
   radius: number;
-  planet: Planet;  // Update type to match the full Planet type
+  planet: Planet;
 }) {
   const [hovered, setHovered] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const ringRef = useRef<THREE.Mesh>(null);
+
+  // Enhanced ring data for specific planets
+  const ringInfo = {
+    Saturn: {
+      hasRings: true,
+      composition: "Ice particles, rocky debris, and dust",
+      width: "70,000 km",
+      discovery: "Galileo Galilei (1610)",
+      details: "Saturn's rings are the most prominent in the solar system, made primarily of water ice and rock"
+    },
+    Uranus: {
+      hasRings: true,
+      composition: "Dark particles, likely rock and dust",
+      width: "2,000 km",
+      discovery: "James L. Elliot, Edward W. Dunham, and Douglas J. Mink (1977)",
+      details: "Uranus has 13 known rings, which are dark and narrow"
+    },
+    Neptune: {
+      hasRings: true,
+      composition: "Ice particles with organic compounds",
+      width: "50,000 km",
+      discovery: "Voyager 2 (1989)",
+      details: "Neptune has five main rings, which are narrow and very dark"
+    }
+  };
 
   const handlePointerMove = (event: THREE.Event) => {
     setMousePosition({
@@ -58,6 +83,9 @@ function OrbitalRing({
       y: (event as unknown as PointerEvent).clientY,
     });
   };
+
+  // Determine if the planet has rings
+  const planetRings = ringInfo[planet.name as keyof typeof ringInfo];
 
   return (
     <group>
@@ -87,10 +115,21 @@ function OrbitalRing({
           <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
             <h3 className="font-bold mb-1">{planet.name}</h3>
             <p className="text-sm">{planet.description}</p>
-            <div className="mt-1 text-xs">
+            <div className="mt-1 text-xs space-y-1">
               <div>Diameter: {planet.diameter.toLocaleString()} km</div>
               <div>Distance from Sun: {Number(planet.distance).toLocaleString()} km</div>
               <div>Temperature: {planet.temperature}°C</div>
+
+              {/* Ring Information Section */}
+              {planetRings && (
+                <div className="mt-2 pt-2 border-t border-white/20">
+                  <div className="font-semibold text-blue-300">Ring System</div>
+                  <div>Composition: {planetRings.composition}</div>
+                  <div>Width: {planetRings.width}</div>
+                  <div>Discovery: {planetRings.discovery}</div>
+                  <div className="mt-1 italic text-xs text-blue-200">{planetRings.details}</div>
+                </div>
+              )}
             </div>
           </div>
         </Html>
