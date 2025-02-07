@@ -9,6 +9,7 @@ import Quiz from "@/pages/Quiz";
 import NotFound from "@/pages/not-found";
 import { SettingsProvider } from "@/lib/settings-context";
 import SpeedControls from "@/components/SpeedControls";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 function Router() {
   return (
@@ -24,16 +25,18 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SettingsProvider>
-        <div className="min-h-screen bg-background text-foreground">
-          <Navigation />
-          <main className="container mx-auto px-4">
-            <Router />
-          </main>
-          <SpeedControls />
-        </div>
-        <Toaster />
-      </SettingsProvider>
+      <ErrorBoundary>
+        <SettingsProvider>
+          <div className="min-h-screen bg-background text-foreground">
+            <Navigation />
+            <main className="container mx-auto px-4">
+              <Router />
+            </main>
+            <SpeedControls />
+          </div>
+          <Toaster />
+        </SettingsProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }
