@@ -113,8 +113,14 @@ function OrbitalRing({
           }}
         >
           <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
-            <h3 className="font-bold mb-1">{planet.name}'s Orbit</h3>
-            <p className="text-sm">Distance from Sun: {Number(planet.distance).toLocaleString()} km</p>
+            <h3 className="font-bold mb-1">{planet.name}</h3>
+            <p className="text-sm">{planet.description}</p>
+            <div className="mt-2 text-xs space-y-1">
+              <div>Diameter: {planet.diameter.toLocaleString()} km</div>
+              <div>Distance from Sun: {Number(planet.distance).toLocaleString()} km</div>
+              <div>Orbital Period: {planet.orbitalPeriod} Earth days</div>
+              <div>Rotation Period: {planet.rotationPeriod} Earth days</div>
+            </div>
 
             {/* Ring Information Section */}
             {planetRings ? (
