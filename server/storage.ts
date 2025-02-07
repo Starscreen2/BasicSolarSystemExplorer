@@ -28,7 +28,12 @@ export class DatabaseStorage implements IStorage {
 
       log(`Initializing planets data with ${planetData.length} planets`, "storage");
       for (const planet of planetData) {
-        await this.createPlanet(planet);
+        try {
+          await this.createPlanet(planet);
+          log(`Created planet: ${planet.name}`, "storage");
+        } catch (error) {
+          log(`Error creating planet ${planet.name}: ${error}`, "error");
+        }
       }
       log("Finished initializing planets data", "storage");
 
@@ -57,7 +62,6 @@ export class DatabaseStorage implements IStorage {
 
   async createPlanet(insertPlanet: InsertPlanet): Promise<Planet> {
     const [planet] = await db.insert(planets).values(insertPlanet).returning();
-    log(`Created planet: ${planet.name}`, "storage");
     return planet;
   }
 
