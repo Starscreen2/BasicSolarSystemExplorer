@@ -28,6 +28,8 @@ function DraggablePlanet({
   const meshRef = useRef<THREE.Mesh>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState<[number, number, number]>(planet.position);
+  const dragPlane = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
+  const intersection = useRef(new THREE.Vector3());
 
   const handlePointerDown = (e: THREE.Event) => {
     e.stopPropagation();
@@ -42,19 +44,33 @@ function DraggablePlanet({
   const handlePointerMove = (e: THREE.Event) => {
     if (isDragging && meshRef.current) {
       e.stopPropagation();
-      const { clientX, clientY } = e;
-
-      // Convert screen coordinates to world coordinates
-      const vector = new THREE.Vector3();
-      vector.set(
-        (clientX / window.innerWidth) * 2 - 1,
-        -(clientY / window.innerHeight) * 2 + 1,
-        0.5
+      const event = e as unknown as PointerEvent;
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
       );
 
-      // Update position
-      meshRef.current.position.set(vector.x * 10, 0, vector.y * 10);
-      setDragPosition([vector.x * 10, 0, vector.y * 10]);
+      raycaster.setFromCamera(mouse, (e as any).camera);
+      raycaster.ray.intersectPlane(dragPlane.current, intersection.current);
+
+      // Limit the drag distance to prevent planets from going too far
+      const maxDistance = 50;
+      const distance = intersection.current.length();
+      if (distance > maxDistance) {
+        intersection.current.normalize().multiplyScalar(maxDistance);
+      }
+
+      meshRef.current.position.set(
+        intersection.current.x,
+        0,
+        intersection.current.z
+      );
+      setDragPosition([
+        intersection.current.x,
+        0,
+        intersection.current.z
+      ]);
     }
   };
 

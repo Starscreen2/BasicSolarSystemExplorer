@@ -46,12 +46,7 @@ function OrbitalRing({
   planet 
 }: { 
   radius: number;
-  planet: {
-    name: string;
-    description: string;
-    diameter: number;
-    orbitalPeriod: number;
-  };
+  planet: Planet;  // Update type to match the full Planet type
 }) {
   const [hovered, setHovered] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -59,8 +54,8 @@ function OrbitalRing({
 
   const handlePointerMove = (event: THREE.Event) => {
     setMousePosition({
-      x: event.clientX,
-      y: event.clientY,
+      x: (event as unknown as PointerEvent).clientX,
+      y: (event as unknown as PointerEvent).clientY,
     });
   };
 
@@ -94,7 +89,8 @@ function OrbitalRing({
             <p className="text-sm">{planet.description}</p>
             <div className="mt-1 text-xs">
               <div>Diameter: {planet.diameter.toLocaleString()} km</div>
-              <div>Orbital Period: {planet.orbitalPeriod} Earth days</div>
+              <div>Distance from Sun: {Number(planet.distance).toLocaleString()} km</div>
+              <div>Temperature: {planet.temperature}°C</div>
             </div>
           </div>
         </Html>
