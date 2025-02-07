@@ -41,7 +41,7 @@ function createTexturePattern() {
   context.fillRect(0, 0, 64, 64);
 
   for (let i = 0; i < 32; i++) {
-    context.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+    context.fillStyle = rgba(255, 255, 255, ${Math.random() * 0.3});
     context.beginPath();
     context.arc(
       Math.random() * 64,
@@ -129,7 +129,7 @@ function OrbitalRing({
       {hovered && (
         <Html
           style={{
-            transform: `translate(${mousePosition.x + 15}px, ${mousePosition.y}px)`,
+            transform: translate(${mousePosition.x + 15}px, ${mousePosition.y}px),
             pointerEvents: 'none',
             zIndex: 1000
           }}
@@ -435,7 +435,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
         {planets.map((planet) => (
           <OrbitalRing 
-            key={`ring-${planet.id}`} 
+            key={ring-${planet.id}} 
             radius={distanceScale(planet.distance)}
             planet={planet}
           />
