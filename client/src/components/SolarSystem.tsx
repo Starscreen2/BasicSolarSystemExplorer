@@ -78,6 +78,7 @@ function OrbitalRing({
   };
 
   const handlePointerMove = (event: THREE.Event) => {
+    event.stopPropagation();
     setMousePosition({
       x: (event as unknown as PointerEvent).clientX,
       y: (event as unknown as PointerEvent).clientY,
@@ -91,8 +92,14 @@ function OrbitalRing({
     <group>
       <mesh 
         rotation={[-Math.PI / 2, 0, 0]}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHovered(true);
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          setHovered(false);
+        }}
         onPointerMove={handlePointerMove}
         ref={ringRef}
       >
@@ -106,10 +113,10 @@ function OrbitalRing({
       </mesh>
       {hovered && (
         <Html
-          position={[0, 0, 0]}
           style={{
             transform: `translate(${mousePosition.x + 15}px, ${mousePosition.y}px)`,
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            zIndex: 1000
           }}
         >
           <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
