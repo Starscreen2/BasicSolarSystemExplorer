@@ -266,7 +266,6 @@ function Planet3D({
 
   // Store initial angle
   const angleRef = useRef(Math.atan2(initialPosition[2], initialPosition[0]));
-  const lastSpeedRef = useRef(orbitSpeedMultiplier);
 
   // Calculate relative speeds
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
