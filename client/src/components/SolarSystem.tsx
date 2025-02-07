@@ -3,7 +3,6 @@ import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
 import { useRef, useState, useEffect, createContext, useContext } from "react";
 import * as THREE from "three";
-import { useSpring, animated } from "@react-spring/three";
 
 interface SolarSystemProps {
   planets: Planet[];
@@ -277,7 +276,7 @@ function Planet3D({
     }
   }, [resetKey]); // Reset when resetKey changes
 
-  useFrame((state) => {
+  useFrame(() => {
     if (!orbitRef.current || !planetRef.current || isSimulationPaused) return;
 
     // Handle planet rotation
@@ -310,36 +309,34 @@ function Planet3D({
           roughness={0.8}
         />
       </mesh>
-      <group>
-        <Billboard
-          follow={true}
-          lockX={false}
-          lockY={false}
-          lockZ={false}
+      <Billboard
+        follow={true}
+        lockX={false}
+        lockY={false}
+        lockZ={false}
+      >
+        <Text
+          position={[0, scaleFactor + 0.5, 0]}
+          fontSize={0.8}
+          color="white"
+          anchorX="center"
+          anchorY="bottom"
         >
-          <Text
-            position={[0, scaleFactor + 0.5, 0]}
-            fontSize={0.8}
-            color="white"
-            anchorX="center"
-            anchorY="bottom"
-          >
-            {name}
-          </Text>
-        </Billboard>
-        {hovered && (
-          <Html position={[scaleFactor + 1, 0, 0]}>
-            <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
-              <h3 className="font-bold mb-1">{name}</h3>
-              <p className="text-sm">{description}</p>
-              <div className="mt-1 text-xs">
-                <div>Diameter: {diameter.toLocaleString()} km</div>
-                <div>Orbital Period: {orbitalPeriod} Earth days</div>
-              </div>
+          {name}
+        </Text>
+      </Billboard>
+      {hovered && (
+        <Html position={[scaleFactor + 1, 0, 0]}>
+          <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
+            <h3 className="font-bold mb-1">{name}</h3>
+            <p className="text-sm">{description}</p>
+            <div className="mt-1 text-xs">
+              <div>Diameter: {diameter.toLocaleString()} km</div>
+              <div>Orbital Period: {orbitalPeriod} Earth days</div>
             </div>
-          </Html>
-        )}
-      </group>
+          </div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -387,6 +384,8 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   const resetOrbits = () => {
     setResetCount(prev => prev + 1);
     setIsSimulationPaused(true);
+    setRotationSpeedMultiplier(1);
+    setOrbitSpeedMultiplier(1);
   };
 
   // Calculate scaling factor for distances
