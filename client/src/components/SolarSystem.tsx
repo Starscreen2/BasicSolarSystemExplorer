@@ -1,7 +1,7 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import { useSettings } from "@/lib/settings-context";
 
@@ -135,24 +135,68 @@ function Planet3D({
   const texture = createTexturePattern();
   const { orbitSpeedMultiplier, rotationSpeedMultiplier } = useSettings();
 
+  // Store initial angle
+  const angleRef = useRef(0);
+  const lastSpeedRef = useRef(orbitSpeedMultiplier);
+  const [isResetting, setIsResetting] = useState(false);
+  const targetAngleRef = useRef(0);
+
   // Calculate relative speeds
-  // Base speed multiplier to make orbits visible (1 Earth year = ~0.6 seconds)
-  const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3); // Convert to radians per frame, 10x faster orbital speed
-  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0); // 0.1x rotation speed
+  const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
+  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
+
+  useEffect(() => {
+    if (orbitSpeedMultiplier !== lastSpeedRef.current) {
+      // Store current angle as target for smooth transition
+      if (orbitRef.current) {
+        const currentX = orbitRef.current.position.x;
+        const currentZ = orbitRef.current.position.z;
+        targetAngleRef.current = Math.atan2(currentZ, currentX);
+        setIsResetting(true);
+      }
+      lastSpeedRef.current = orbitSpeedMultiplier;
+    }
+  }, [orbitSpeedMultiplier]);
+
   useFrame((state) => {
     if (planetRef.current && orbitRef.current) {
       // Handle planet rotation
       const rotationDirection = rotationPeriod < 0 ? -1 : 1;
       planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
 
-      // Calculate orbital position
-      const time = state.clock.getElapsedTime();
-      const angle = time * baseOrbitalSpeed * orbitSpeedMultiplier;
-      const orbitRadius = position[0]; // Use x-coordinate as radius
+      const orbitRadius = position[0];
 
-      // Update position for orbital motion
-      orbitRef.current.position.x = Math.cos(angle) * orbitRadius;
-      orbitRef.current.position.z = Math.sin(angle) * orbitRadius;
+      if (isResetting) {
+        // Smoothly interpolate to target angle
+        const currentX = orbitRef.current.position.x;
+        const currentZ = orbitRef.current.position.z;
+        const currentAngle = Math.atan2(currentZ, currentX);
+
+        // Calculate the shortest path to target angle
+        let angleDiff = targetAngleRef.current - currentAngle;
+        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+        // Smoothly interpolate
+        const t = 0.1; // Adjust for faster/slower transition
+        const newAngle = currentAngle + angleDiff * t;
+
+        orbitRef.current.position.x = Math.cos(newAngle) * orbitRadius;
+        orbitRef.current.position.z = Math.sin(newAngle) * orbitRadius;
+
+        // Check if we're close enough to target
+        if (Math.abs(angleDiff) < 0.01) {
+          setIsResetting(false);
+          angleRef.current = newAngle;
+        }
+      } else {
+        // Normal orbital motion
+        const time = state.clock.getElapsedTime();
+        angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * 0.016; // Assuming 60fps
+
+        orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
+        orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
+      }
     }
   });
 
