@@ -147,7 +147,11 @@ function Planet3D({
 
       // Calculate orbital position
       const time = state.clock.getElapsedTime();
-      const angle = time * baseOrbitalSpeed * orbitSpeedMultiplier;
+      if (!planetRef.current.userData.lastAngle) {
+        planetRef.current.userData.lastAngle = time * baseOrbitalSpeed;
+      }
+      planetRef.current.userData.lastAngle += baseOrbitalSpeed * orbitSpeedMultiplier * state.clock.elapsedTime;
+      const angle = planetRef.current.userData.lastAngle;
       const orbitRadius = position[0]; // Use x-coordinate as radius
 
       // Update position for orbital motion
