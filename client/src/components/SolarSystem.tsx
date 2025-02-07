@@ -1,9 +1,10 @@
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
 import { useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import { useSettings } from "@/lib/settings-context";
+import { useSpring, animated } from "@react-spring/three";
 
 interface SolarSystemProps {
   planets: Planet[];
@@ -53,7 +54,15 @@ function OrbitalRing({
   };
 }) {
   const [hovered, setHovered] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const ringRef = useRef<THREE.Mesh>(null);
+
+  const handlePointerMove = (event: THREE.Event) => {
+    setMousePosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+  };
 
   return (
     <group>
@@ -61,9 +70,10 @@ function OrbitalRing({
         rotation={[-Math.PI / 2, 0, 0]}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
+        onPointerMove={handlePointerMove}
         ref={ringRef}
       >
-        <ringGeometry args={[radius, radius + 0.2, 128]} />
+        <ringGeometry args={[radius, radius + 0.4, 128]} />
         <meshBasicMaterial 
           color={hovered ? "#6f8fff" : "#ffffff"} 
           opacity={hovered ? 0.5 : 0.3} 
@@ -72,7 +82,13 @@ function OrbitalRing({
         />
       </mesh>
       {hovered && (
-        <Html position={[radius + 2, 2, 0]}>
+        <Html
+          position={[0, 0, 0]}
+          style={{
+            transform: `translate(${mousePosition.x + 15}px, ${mousePosition.y}px)`,
+            pointerEvents: 'none'
+          }}
+        >
           <div className="bg-black/80 text-white p-2 rounded-lg shadow-lg w-48">
             <h3 className="font-bold mb-1">{planet.name}</h3>
             <p className="text-sm">{planet.description}</p>
@@ -290,6 +306,29 @@ function Planet3D({
   );
 }
 
+function CameraAnimation() {
+  const { camera } = useThree();
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (!started) {
+      camera.position.set(0, 100, 160);
+      setStarted(true);
+    }
+  }, [camera, started]);
+
+  useFrame(() => {
+    if (started && camera.position.y > 40) {
+      const dy = (40 - camera.position.y) * 0.02;
+      const dz = (60 - camera.position.z) * 0.02;
+      camera.position.y += dy;
+      camera.position.z += dz;
+    }
+  });
+
+  return null;
+}
+
 export default function SolarSystem({ planets }: SolarSystemProps) {
   const colors = [
     "#ffcc00", // Mercury
@@ -311,13 +350,13 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   return (
     <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
+      <CameraAnimation />
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={1} />
       <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
 
       <Sun />
 
-      {/* Orbital Rings with planet info */}
       {planets.map((planet) => (
         <OrbitalRing 
           key={`ring-${planet.id}`} 
@@ -326,7 +365,6 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
         />
       ))}
 
-      {/* Planets */}
       {planets.map((planet, index) => (
         <Planet3D
           key={planet.id}
