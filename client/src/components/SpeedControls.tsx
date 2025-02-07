@@ -14,9 +14,23 @@ export default function SpeedControls() {
   } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
 
+  const {
+    isSimulationPaused,
+    setIsSimulationPaused,
+  } = useSettings();
+
   const resetSpeeds = () => {
     setOrbitSpeedMultiplier(1);
     setRotationSpeedMultiplier(1);
+  };
+
+  const toggleSimulation = () => {
+    setIsSimulationPaused(!isSimulationPaused);
+  };
+
+  const resetAll = () => {
+    resetSpeeds();
+    setIsSimulationPaused(false);
   };
 
   if (!isOpen) {
@@ -76,9 +90,14 @@ export default function SpeedControls() {
             />
           </div>
 
-          <Button variant="secondary" size="sm" onClick={resetSpeeds} className="w-full">
-            Reset to Default
-          </Button>
+          <div className="space-y-2">
+            <Button variant="secondary" size="sm" onClick={toggleSimulation} className="w-full">
+              {isSimulationPaused ? "Resume Simulation" : "Pause Simulation"}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={resetAll} className="w-full">
+              Reset All
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

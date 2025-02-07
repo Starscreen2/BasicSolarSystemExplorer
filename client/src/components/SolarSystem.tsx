@@ -1,13 +1,28 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, createContext, useContext } from "react";
 import * as THREE from "three";
-import { useSettings } from "@/lib/settings-context";
 import { useSpring, animated } from "@react-spring/three";
 
 interface SolarSystemProps {
   planets: Planet[];
+}
+
+const SettingsContext = createContext<{
+  rotationSpeedMultiplier: number;
+  orbitSpeedMultiplier: number;
+  isSimulationPaused: boolean;
+  toggleSimulationPause: () => void;
+}>({
+  rotationSpeedMultiplier: 1,
+  orbitSpeedMultiplier: 1,
+  isSimulationPaused: false,
+  toggleSimulationPause: () => {},
+});
+
+function useSettings() {
+  return useContext(SettingsContext);
 }
 
 function createTexturePattern() {
@@ -236,7 +251,7 @@ function Planet3D({
   const planetRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
-  const { orbitSpeedMultiplier, rotationSpeedMultiplier } = useSettings();
+  const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused } = useSettings();
 
   // Store initial angle
   const angleRef = useRef(0);
@@ -262,7 +277,7 @@ function Planet3D({
   }, [orbitSpeedMultiplier]);
 
   useFrame((state) => {
-    if (planetRef.current && orbitRef.current) {
+    if (planetRef.current && orbitRef.current && !isSimulationPaused) {
       // Handle planet rotation
       const rotationDirection = rotationPeriod < 0 ? -1 : 1;
       planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
@@ -390,6 +405,12 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
     "#3333cc", // Neptune
   ];
 
+  const [isSimulationPaused, setIsSimulationPaused] = useState(false);
+
+  const toggleSimulationPause = () => {
+    setIsSimulationPaused(!isSimulationPaused);
+  };
+
   // Calculate scaling factor for distances
   const maxDistance = Math.max(...planets.map(p => Number(p.distance)));
   const distanceScale = (distance: bigint) => {
@@ -398,42 +419,44 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   };
 
   return (
-    <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
-      <CameraAnimation />
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
+    <SettingsContext.Provider value={{ rotationSpeedMultiplier: 1, orbitSpeedMultiplier: 1, isSimulationPaused, toggleSimulationPause }}>
+      <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
+        <CameraAnimation />
+        <ambientLight intensity={0.5} />
+        <pointLight position={[10, 10, 10]} intensity={1} />
+        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
 
-      <Sun />
+        <Sun />
 
-      {planets.map((planet) => (
-        <OrbitalRing 
-          key={`ring-${planet.id}`} 
-          radius={distanceScale(planet.distance)}
-          planet={planet}
+        {planets.map((planet) => (
+          <OrbitalRing 
+            key={`ring-${planet.id}`} 
+            radius={distanceScale(planet.distance)}
+            planet={planet}
+          />
+        ))}
+
+        {planets.map((planet, index) => (
+          <Planet3D
+            key={planet.id}
+            position={[distanceScale(planet.distance), 0, 0]}
+            color={colors[index]}
+            name={planet.name}
+            diameter={planet.diameter}
+            description={planet.description}
+            orbitalPeriod={planet.orbitalPeriod}
+            rotationPeriod={planet.rotationPeriod}
+          />
+        ))}
+
+        <OrbitControls 
+          enableZoom={true} 
+          enablePan={true} 
+          enableRotate={true}
+          maxDistance={150}
+          minDistance={20}
         />
-      ))}
-
-      {planets.map((planet, index) => (
-        <Planet3D
-          key={planet.id}
-          position={[distanceScale(planet.distance), 0, 0]}
-          color={colors[index]}
-          name={planet.name}
-          diameter={planet.diameter}
-          description={planet.description}
-          orbitalPeriod={planet.orbitalPeriod}
-          rotationPeriod={planet.rotationPeriod}
-        />
-      ))}
-
-      <OrbitControls 
-        enableZoom={true} 
-        enablePan={true} 
-        enableRotate={true}
-        maxDistance={150}
-        minDistance={20}
-      />
-    </Canvas>
+      </Canvas>
+    </SettingsContext.Provider>
   );
 }
