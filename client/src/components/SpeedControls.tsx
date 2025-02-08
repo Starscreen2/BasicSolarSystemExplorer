@@ -9,6 +9,8 @@ export default function SpeedControls() {
   const {
     orbitSpeedMultiplier,
     rotationSpeedMultiplier,
+    sliderOrbitSpeed,
+    sliderRotationSpeed,
     isSimulationPaused,
     updateOrbitSpeed,
     updateRotationSpeed,
