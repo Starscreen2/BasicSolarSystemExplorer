@@ -64,8 +64,8 @@ export default function SpeedControls() {
               value={[orbitSpeedMultiplier]}
               onValueChange={handleOrbitSpeedChange}
               min={0}
-              max={10}
-              step={0.1}
+              max={100}
+              step={1}
               className="cursor-pointer"
             />
           </div>
@@ -81,8 +81,8 @@ export default function SpeedControls() {
               value={[rotationSpeedMultiplier]}
               onValueChange={handleRotationSpeedChange}
               min={0}
-              max={10}
-              step={0.1}
+              max={100}
+              step={1}
               className="cursor-pointer"
             />
           </div>
