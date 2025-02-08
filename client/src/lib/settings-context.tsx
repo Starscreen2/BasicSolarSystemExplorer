@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface SettingsContextType {
@@ -7,6 +8,8 @@ interface SettingsContextType {
   setOrbitSpeedMultiplier: (speed: number) => void;
   setRotationSpeedMultiplier: (speed: number) => void;
   setIsSimulationPaused: (paused: boolean) => void;
+  toggleSimulationPause: () => void;
+  resetOrbits: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -15,6 +18,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [orbitSpeedMultiplier, setOrbitSpeedMultiplier] = useState(1);
   const [rotationSpeedMultiplier, setRotationSpeedMultiplier] = useState(1);
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
+
+  const toggleSimulationPause = () => {
+    setIsSimulationPaused((prev) => !prev);
+  };
+
+  const resetOrbits = () => {
+    setOrbitSpeedMultiplier(1);
+    setRotationSpeedMultiplier(1);
+    setIsSimulationPaused(false);
+  };
 
   return (
     <SettingsContext.Provider
@@ -25,6 +38,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setOrbitSpeedMultiplier,
         setRotationSpeedMultiplier,
         setIsSimulationPaused,
+        toggleSimulationPause,
+        resetOrbits,
       }}
     >
       {children}
