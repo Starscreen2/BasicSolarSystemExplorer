@@ -61,7 +61,6 @@ export default function SpeedControls() {
               </span>
             </div>
             <Slider
-              defaultValue={[orbitSpeedMultiplier]}
               value={[orbitSpeedMultiplier]}
               onValueChange={handleOrbitSpeedChange}
               min={0}
@@ -79,7 +78,6 @@ export default function SpeedControls() {
               </span>
             </div>
             <Slider
-              defaultValue={[rotationSpeedMultiplier]}
               value={[rotationSpeedMultiplier]}
               onValueChange={handleRotationSpeedChange}
               min={0}
