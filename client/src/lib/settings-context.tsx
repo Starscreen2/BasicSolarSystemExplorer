@@ -1,12 +1,11 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface SettingsContextType {
-  // These values are what the sliders show.
+  orbitSpeedMultiplier: number;
+  rotationSpeedMultiplier: number;
   sliderOrbitSpeed: number;
   sliderRotationSpeed: number;
-  // These values are used in the simulation (if paused, they become 0).
-  orbitSpeed: number;
-  rotationSpeed: number;
+  isSimulationPaused: boolean;
   isSimulationPaused: boolean;
   // Update functions that update both the slider state and, if not paused, the live speeds.
   updateOrbitSpeed: (speed: number) => void;
