@@ -269,16 +269,25 @@ function Planet3D({
   const initialPositionRef = useRef<[number, number, number]>(initialPosition);
   const angleRef = useRef(Math.atan2(initialPosition[2], initialPosition[0]));
 
-  // Calculate base speeds
-  const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
-  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
+  // Animation spring for smooth position transitions
+  const [springs, api] = useSpring(() => ({
+    position: initialPosition,
+    config: { mass: 1, tension: 180, friction: 12 }
+  }));
 
   useEffect(() => {
     if (orbitRef.current) {
-      orbitRef.current.position.set(...initialPositionRef.current);
+      api.start({
+        position: initialPositionRef.current,
+        immediate: false
+      });
       angleRef.current = Math.atan2(initialPositionRef.current[2], initialPositionRef.current[0]);
     }
   }, []);
+
+  // Calculate base speeds
+  const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
+  const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
 
   useFrame((state, delta) => {
     if (!isSimulationPaused && planetRef.current && orbitRef.current) {
@@ -293,8 +302,10 @@ function Planet3D({
       const newX = Math.cos(angleRef.current) * orbitRadius;
       const newZ = Math.sin(angleRef.current) * orbitRadius;
 
-      orbitRef.current.position.x = newX;
-      orbitRef.current.position.z = newZ;
+      api.start({
+        position: [newX, 0, newZ],
+        immediate: true
+      });
     }
   });
 
@@ -302,7 +313,7 @@ function Planet3D({
   const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8));
 
   return (
-    <group ref={orbitRef} position={initialPosition}>
+    <animated.group style={springs}>
       <mesh
         ref={planetRef}
         onPointerOver={() => setHovered(true)}
@@ -346,7 +357,7 @@ function Planet3D({
           </Html>
         )}
       </group>
-    </group>
+    </animated.group>
   );
 }
 
@@ -388,7 +399,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
     // Resume simulation after a brief delay to ensure positions are reset
     setTimeout(() => {
       setIsSimulationPaused(false);
-    }, 100);
+    }, 1000); // Increased delay to allow for smooth animation
   };
 
   const colors = [
