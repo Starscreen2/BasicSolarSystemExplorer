@@ -7,8 +7,8 @@ import { Settings2, Pause, Play, RotateCcw } from "lucide-react";
 
 export default function SpeedControls() {
   const {
-    sliderOrbitSpeed,
-    sliderRotationSpeed,
+    orbitSpeedMultiplier,
+    rotationSpeedMultiplier,
     isSimulationPaused,
     updateOrbitSpeed,
     updateRotationSpeed,
@@ -64,7 +64,7 @@ export default function SpeedControls() {
               </span>
             </div>
             <Slider
-              value={[sliderOrbitSpeed]}
+              value={[orbitSpeedMultiplier]}
               onValueChange={handleOrbitSpeedChange}
               min={0}
               max={100}
@@ -81,7 +81,7 @@ export default function SpeedControls() {
               </span>
             </div>
             <Slider
-              value={[sliderRotationSpeed]}
+              value={[rotationSpeedMultiplier]}
               onValueChange={handleRotationSpeedChange}
               min={0}
               max={100}
