@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { useSettings } from "@/lib/settings-context"; // Adjust the path if needed
+import { useSettings } from "@/lib/settings-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings2, Pause, Play, RotateCcw } from "lucide-react";
 
@@ -23,14 +23,12 @@ export default function SpeedControls() {
 
   const handleOrbitSpeedChange = (values: number[]) => {
     if (values.length > 0) {
-      console.log("Orbit speed changed to:", values[0]);
       updateOrbitSpeed(values[0]);
     }
   };
 
   const handleRotationSpeedChange = (values: number[]) => {
     if (values.length > 0) {
-      console.log("Rotation speed changed to:", values[0]);
       updateRotationSpeed(values[0]);
     }
   };
@@ -67,7 +65,7 @@ export default function SpeedControls() {
               </span>
             </div>
             <Slider
-              value={[orbitSpeedMultiplier]}
+              value={[sliderOrbitSpeed]}
               onValueChange={handleOrbitSpeedChange}
               min={0}
               max={100}
@@ -84,7 +82,7 @@ export default function SpeedControls() {
               </span>
             </div>
             <Slider
-              value={[rotationSpeedMultiplier]}
+              value={[sliderRotationSpeed]}
               onValueChange={handleRotationSpeedChange}
               min={0}
               max={100}
@@ -97,7 +95,7 @@ export default function SpeedControls() {
             <Button
               variant="default"
               size="sm"
-              onClick={() => applyChanges()}
+              onClick={applyChanges}
               className="w-full flex items-center gap-2"
             >
               Apply

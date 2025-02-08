@@ -96,11 +96,11 @@ function OrbitalRing({ radius, planet }: { radius: number; planet: Planet }) {
     },
   };
 
-  const handlePointerMove = (event: THREE.Event) => {
+  const handlePointerMove = (event: THREE.ThreeEvent<PointerEvent>) => {
     event.stopPropagation();
     setMousePosition({
-      x: (event as unknown as PointerEvent).clientX,
-      y: (event as unknown as PointerEvent).clientY,
+      x: event.clientX,
+      y: event.clientY,
     });
   };
 

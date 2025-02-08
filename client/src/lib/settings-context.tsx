@@ -23,6 +23,7 @@ const SettingsContext = createContext<SettingsContextType>({
   updateRotationSpeed: () => {},
   toggleSimulationPause: () => {},
   resetOrbits: () => {},
+  applyChanges: () => {}, // Added missing applyChanges property
 });
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
@@ -48,10 +49,21 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleSimulationPause = () => {
+    if (isSimulationPaused) {
+      // When resuming, apply the pending speeds
+      setOrbitSpeedMultiplier(pendingOrbitSpeed);
+      setRotationSpeedMultiplier(pendingRotationSpeed);
+    } else {
+      // When pausing, set speeds to 0 but keep pending values
+      setOrbitSpeedMultiplier(0);
+      setRotationSpeedMultiplier(0);
+    }
     setIsSimulationPaused(!isSimulationPaused);
   };
 
   const resetOrbits = () => {
+    setPendingOrbitSpeed(1);
+    setPendingRotationSpeed(1);
     setOrbitSpeedMultiplier(1);
     setRotationSpeedMultiplier(1);
   };
