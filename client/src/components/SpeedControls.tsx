@@ -16,6 +16,7 @@ export default function SpeedControls() {
     updateRotationSpeed,
     toggleSimulationPause,
     resetOrbits,
+    applyChanges,
   } = useSettings();
 
   const [isOpen, setIsOpen] = useState(false);
