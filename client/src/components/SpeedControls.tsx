@@ -93,7 +93,7 @@ export default function SpeedControls() {
             <Button 
               variant="secondary" 
               size="sm" 
-              onClick={toggleSimulationPause}
+              onClick={() => setIsSimulationPaused(!isSimulationPaused)}
               className="w-full flex items-center gap-2"
             >
               {isSimulationPaused ? (
