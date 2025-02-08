@@ -261,35 +261,41 @@ function Planet3D({
   const texture = createTexturePattern();
   const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused } = useSettings();
 
-  // Store initial position
+  // Store initial position and angle
   const initialPositionRef = useRef<[number, number, number]>(initialPosition);
-
-  // Store initial angle
   const angleRef = useRef(Math.atan2(initialPosition[2], initialPosition[0]));
 
-  // Calculate relative speeds
+  // Calculate base speeds
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
 
-  useFrame((state) => {
-    if (planetRef.current && orbitRef.current && !isSimulationPaused) {
+  useEffect(() => {
+    if (orbitRef.current) {
+      orbitRef.current.position.set(...initialPositionRef.current);
+      angleRef.current = Math.atan2(initialPositionRef.current[2], initialPositionRef.current[0]);
+    }
+  }, []);
+
+  useFrame((state, delta) => {
+    if (!isSimulationPaused && planetRef.current && orbitRef.current) {
       // Handle planet rotation
       const rotationDirection = rotationPeriod < 0 ? -1 : 1;
-      planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
+      planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * delta * rotationDirection;
 
+      // Handle orbital motion
       const orbitRadius = initialPositionRef.current[0];
+      angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * delta;
 
-      // Update orbital position
-      angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * 0.016; // Assuming 60fps
+      const newX = Math.cos(angleRef.current) * orbitRadius;
+      const newZ = Math.sin(angleRef.current) * orbitRadius;
 
-      orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
-      orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
+      orbitRef.current.position.x = newX;
+      orbitRef.current.position.z = newZ;
     }
   });
 
-
   // Scale factor to make planets visible while maintaining relative sizes
-  const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8)); // Earth's diameter as reference
+  const scaleFactor = Math.max(0.3, Math.min(1.5, diameter / 12742 * 0.8));
 
   return (
     <group ref={orbitRef} position={initialPosition}>
@@ -369,12 +375,14 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
 
   const resetOrbits = () => {
-    // Reset speed multipliers
+    setIsSimulationPaused(true);
     setRotationSpeedMultiplier(1);
     setOrbitSpeedMultiplier(1);
-    setIsSimulationPaused(true);
-    // Resume after a short delay to ensure planets are back in position
-    setTimeout(() => setIsSimulationPaused(false), 100);
+
+    // Resume simulation after a brief delay to ensure positions are reset
+    setTimeout(() => {
+      setIsSimulationPaused(false);
+    }, 100);
   };
 
   const colors = [
