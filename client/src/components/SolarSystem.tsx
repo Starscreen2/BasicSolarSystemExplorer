@@ -1,46 +1,10 @@
-// SolarSystem.tsx
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
-import { useRef, useState, useEffect, createContext, useContext } from "react";
+import { useRef, useState, useEffect } from "react";
 import * as THREE from "three";
-
-// =============================================================================
-// SETTINGS CONTEXT
-// =============================================================================
-
-export interface SettingsContextType {
-  // The simulation speeds used by the 3D animation (if paused these are 0)
-  orbitSpeedMultiplier: number;
-  rotationSpeedMultiplier: number;
-  // The slider values (what the user sees/edits) even when paused
-  sliderOrbitSpeed: number;
-  sliderRotationSpeed: number;
-  isSimulationPaused: boolean;
-  // Call these to update the slider values (which will update the simulation if not paused)
-  updateOrbitSpeed: (value: number) => void;
-  updateRotationSpeed: (value: number) => void;
-  // Toggle pause/resume: when pausing the speeds are set to 0 while the slider values are saved
-  toggleSimulationPause: () => void;
-  // Reset both speeds to 1 (and update stored slider values if paused)
-  resetOrbits: () => void;
-}
-
-const SettingsContext = createContext<SettingsContextType>({
-  orbitSpeedMultiplier: 1,
-  rotationSpeedMultiplier: 1,
-  sliderOrbitSpeed: 1,
-  sliderRotationSpeed: 1,
-  isSimulationPaused: false,
-  updateOrbitSpeed: () => {},
-  updateRotationSpeed: () => {},
-  toggleSimulationPause: () => {},
-  resetOrbits: () => {},
-});
-
-export function useSettings() {
-  return useContext(SettingsContext);
-}
+import { useSettings } from "@/lib/settings-context";
+import type { PointerEvent } from "@react-three/fiber";
 
 // =============================================================================
 // UTILITY FUNCTION: Create a texture pattern for spheres
@@ -96,7 +60,7 @@ function OrbitalRing({ radius, planet }: { radius: number; planet: Planet }) {
     },
   };
 
-  const handlePointerMove = (event: THREE.ThreeEvent<PointerEvent>) => {
+  const handlePointerMove = (event: PointerEvent) => {
     event.stopPropagation();
     setMousePosition({
       x: event.clientX,
@@ -366,58 +330,16 @@ interface SolarSystemProps {
 }
 
 export default function SolarSystem({ planets }: SolarSystemProps) {
-  // These states control the speeds used in the simulation.
-  // When paused, the speeds are set to 0 while we store the desired (slider) speeds.
-  const [orbitSpeedMultiplier, setOrbitSpeedMultiplier] = useState(1);
-  const [rotationSpeedMultiplier, setRotationSpeedMultiplier] = useState(1);
-  const [storedOrbitSpeed, setStoredOrbitSpeed] = useState(1);
-  const [storedRotationSpeed, setStoredRotationSpeed] = useState(1);
-  const [isSimulationPaused, setIsSimulationPaused] = useState(false);
+  const {
+    orbitSpeedMultiplier,
+    rotationSpeedMultiplier,
+    isSimulationPaused,
+    updateOrbitSpeed,
+    updateRotationSpeed,
+    toggleSimulationPause,
+    resetOrbits,
+  } = useSettings();
 
-  // Toggle pause/resume:
-  // On pause, store current speeds and set simulation speeds to 0.
-  // On resume, restore speeds from stored values.
-  const toggleSimulationPause = () => {
-    if (!isSimulationPaused) {
-      setStoredOrbitSpeed(orbitSpeedMultiplier);
-      setStoredRotationSpeed(rotationSpeedMultiplier);
-      setOrbitSpeedMultiplier(0);
-      setRotationSpeedMultiplier(0);
-      setIsSimulationPaused(true);
-    } else {
-      setOrbitSpeedMultiplier(storedOrbitSpeed);
-      setRotationSpeedMultiplier(storedRotationSpeed);
-      setIsSimulationPaused(false);
-    }
-  };
-
-  // When the user changes a slider, update the stored speed if paused or the live speed otherwise.
-  const updateOrbitSpeed = (value: number) => {
-    if (isSimulationPaused) {
-      setStoredOrbitSpeed(value);
-    } else {
-      setOrbitSpeedMultiplier(value);
-    }
-  };
-
-  const updateRotationSpeed = (value: number) => {
-    if (isSimulationPaused) {
-      setStoredRotationSpeed(value);
-    } else {
-      setRotationSpeedMultiplier(value);
-    }
-  };
-
-  // Reset both speeds to 1. If paused, update the stored speeds.
-  const resetOrbits = () => {
-    if (isSimulationPaused) {
-      setStoredOrbitSpeed(1);
-      setStoredRotationSpeed(1);
-    } else {
-      setOrbitSpeedMultiplier(1);
-      setRotationSpeedMultiplier(1);
-    }
-  };
 
   // A simple scaling function for planet distances.
   const distanceScale = (distance: number) => {
@@ -437,47 +359,32 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   ];
 
   return (
-    <SettingsContext.Provider
-      value={{
-        orbitSpeedMultiplier,
-        rotationSpeedMultiplier,
-        // For the slider, show the stored value when paused
-        sliderOrbitSpeed: isSimulationPaused ? storedOrbitSpeed : orbitSpeedMultiplier,
-        sliderRotationSpeed: isSimulationPaused ? storedRotationSpeed : rotationSpeedMultiplier,
-        isSimulationPaused,
-        updateOrbitSpeed,
-        updateRotationSpeed,
-        toggleSimulationPause,
-        resetOrbits,
-      }}
-    >
-      <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
-        <CameraAnimation />
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
-        <Sun />
-        {planets.map((planet) => (
-          <OrbitalRing
-            key={`ring-${planet.id}`}
-            radius={distanceScale(Number(planet.distance))}
-            planet={planet}
-          />
-        ))}
-        {planets.map((planet, index) => (
-          <Planet3D
-            key={planet.id}
-            position={[distanceScale(Number(planet.distance)), 0, 0]}
-            color={colors[index]}
-            name={planet.name}
-            diameter={planet.diameter}
-            description={planet.description}
-            orbitalPeriod={planet.orbitalPeriod}
-            rotationPeriod={planet.rotationPeriod}
-          />
-        ))}
-        <OrbitControls enableZoom enablePan enableRotate maxDistance={150} minDistance={20} />
-      </Canvas>
-    </SettingsContext.Provider>
+    <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
+      <CameraAnimation />
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={1} />
+      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
+      <Sun />
+      {planets.map((planet) => (
+        <OrbitalRing
+          key={`ring-${planet.id}`}
+          radius={distanceScale(Number(planet.distance))}
+          planet={planet}
+        />
+      ))}
+      {planets.map((planet, index) => (
+        <Planet3D
+          key={planet.id}
+          position={[distanceScale(Number(planet.distance)), 0, 0]}
+          color={colors[index]}
+          name={planet.name}
+          diameter={planet.diameter}
+          description={planet.description}
+          orbitalPeriod={planet.orbitalPeriod}
+          rotationPeriod={planet.rotationPeriod}
+        />
+      ))}
+      <OrbitControls enableZoom enablePan enableRotate maxDistance={150} minDistance={20} />
+    </Canvas>
   );
 }

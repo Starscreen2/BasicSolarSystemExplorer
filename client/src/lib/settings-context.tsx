@@ -13,18 +13,7 @@ interface SettingsContextType {
   applyChanges: () => void;
 }
 
-const SettingsContext = createContext<SettingsContextType>({
-  orbitSpeedMultiplier: 1,
-  rotationSpeedMultiplier: 1,
-  sliderOrbitSpeed: 1,
-  sliderRotationSpeed: 1,
-  isSimulationPaused: false,
-  updateOrbitSpeed: () => {},
-  updateRotationSpeed: () => {},
-  toggleSimulationPause: () => {},
-  resetOrbits: () => {},
-  applyChanges: () => {}, // Added missing applyChanges property
-});
+const SettingsContext = createContext<SettingsContextType | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [orbitSpeedMultiplier, setOrbitSpeedMultiplier] = useState(1);
@@ -42,13 +31,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   };
 
   const applyChanges = () => {
-    if (!isSimulationPaused) {
-      setOrbitSpeedMultiplier(pendingOrbitSpeed);
-      setRotationSpeedMultiplier(pendingRotationSpeed);
-    }
+    setOrbitSpeedMultiplier(pendingOrbitSpeed);
+    setRotationSpeedMultiplier(pendingRotationSpeed);
   };
 
   const toggleSimulationPause = () => {
+    setIsSimulationPaused(!isSimulationPaused);
     if (isSimulationPaused) {
       // When resuming, apply the pending speeds
       setOrbitSpeedMultiplier(pendingOrbitSpeed);
@@ -58,7 +46,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setOrbitSpeedMultiplier(0);
       setRotationSpeedMultiplier(0);
     }
-    setIsSimulationPaused(!isSimulationPaused);
   };
 
   const resetOrbits = () => {
@@ -66,6 +53,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setPendingRotationSpeed(1);
     setOrbitSpeedMultiplier(1);
     setRotationSpeedMultiplier(1);
+    setIsSimulationPaused(false);
   };
 
   return (
@@ -78,9 +66,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         isSimulationPaused,
         updateOrbitSpeed,
         updateRotationSpeed,
-        applyChanges,
         toggleSimulationPause,
         resetOrbits,
+        applyChanges,
       }}
     >
       {children}
