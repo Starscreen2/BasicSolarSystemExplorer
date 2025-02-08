@@ -1,3 +1,4 @@
+// App.tsx
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,7 +9,7 @@ import PlanetDetail from "@/pages/PlanetDetail";
 import Quiz from "@/pages/Quiz";
 import SolarSystemBuilder from "@/pages/SolarSystemBuilder";
 import NotFound from "@/pages/not-found";
-import { SettingsProvider } from "@/lib/settings-context";
+import { SettingsProvider } from "@/lib/settings-context"; // Our new context provider
 import SpeedControls from "@/components/SpeedControls";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { WithErrorBoundary } from "@/components/WithErrorBoundary";

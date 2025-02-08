@@ -1,32 +1,34 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { useSettings } from "@/lib/settings-context";
+import { useSettings } from "@/lib/settings-context"; // Adjust the path if needed
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings2, Pause, Play, RotateCcw } from "lucide-react";
-import { useState } from "react";
 
 export default function SpeedControls() {
   const {
-    orbitSpeedMultiplier,
-    rotationSpeedMultiplier,
+    sliderOrbitSpeed,
+    sliderRotationSpeed,
     isSimulationPaused,
-    setIsSimulationPaused,
-    setOrbitSpeedMultiplier,
-    setRotationSpeedMultiplier,
+    updateOrbitSpeed,
+    updateRotationSpeed,
+    toggleSimulationPause,
     resetOrbits,
   } = useSettings();
 
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOrbitSpeedChange = (values: number[]) => {
-    if (values && values.length > 0) {
-      setOrbitSpeedMultiplier(values[0]);
+    if (values.length > 0) {
+      console.log("Orbit speed changed to:", values[0]);
+      updateOrbitSpeed(values[0]);
     }
   };
 
   const handleRotationSpeedChange = (values: number[]) => {
-    if (values && values.length > 0) {
-      setRotationSpeedMultiplier(values[0]);
+    if (values.length > 0) {
+      console.log("Rotation speed changed to:", values[0]);
+      updateRotationSpeed(values[0]);
     }
   };
 
@@ -53,45 +55,46 @@ export default function SpeedControls() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Orbital Speed Slider */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm">Orbital Speed</label>
               <span className="text-xs text-muted-foreground">
-                {orbitSpeedMultiplier.toFixed(1)}x
+                {sliderOrbitSpeed.toFixed(1)}x
               </span>
             </div>
             <Slider
-              value={[orbitSpeedMultiplier]}
+              value={[sliderOrbitSpeed]}
               onValueChange={handleOrbitSpeedChange}
               min={0}
-              max={100}
-              step={1}
+              max={10}
+              step={0.1}
               className="cursor-pointer"
             />
           </div>
-
+          {/* Rotation Speed Slider */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm">Rotation Speed</label>
               <span className="text-xs text-muted-foreground">
-                {rotationSpeedMultiplier.toFixed(1)}x
+                {sliderRotationSpeed.toFixed(1)}x
               </span>
             </div>
             <Slider
-              value={[rotationSpeedMultiplier]}
+              value={[sliderRotationSpeed]}
               onValueChange={handleRotationSpeedChange}
               min={0}
-              max={100}
-              step={1}
+              max={10}
+              step={0.1}
               className="cursor-pointer"
             />
           </div>
-
+          {/* Control Buttons */}
           <div className="grid grid-cols-2 gap-2">
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              onClick={() => setIsSimulationPaused(!isSimulationPaused)}
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={toggleSimulationPause}
               className="w-full flex items-center gap-2"
             >
               {isSimulationPaused ? (
@@ -106,9 +109,9 @@ export default function SpeedControls() {
                 </>
               )}
             </Button>
-            <Button 
-              variant="secondary" 
-              size="sm" 
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={resetOrbits}
               className="w-full flex items-center gap-2"
             >

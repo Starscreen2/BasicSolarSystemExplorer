@@ -1,43 +1,83 @@
-
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface SettingsContextType {
-  orbitSpeedMultiplier: number;
-  rotationSpeedMultiplier: number;
+  // These values are what the sliders show.
+  sliderOrbitSpeed: number;
+  sliderRotationSpeed: number;
+  // These values are used in the simulation (if paused, they become 0).
+  orbitSpeed: number;
+  rotationSpeed: number;
   isSimulationPaused: boolean;
-  setOrbitSpeedMultiplier: (speed: number) => void;
-  setRotationSpeedMultiplier: (speed: number) => void;
-  setIsSimulationPaused: (paused: boolean) => void;
+  // Update functions that update both the slider state and, if not paused, the live speeds.
+  updateOrbitSpeed: (speed: number) => void;
+  updateRotationSpeed: (speed: number) => void;
+  // Toggle pause/resume: on pause the live speeds become 0; on resume, they are restored from the slider.
   toggleSimulationPause: () => void;
+  // Reset both slider and live speeds to their default (1)
   resetOrbits: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [orbitSpeedMultiplier, setOrbitSpeedMultiplier] = useState(1);
-  const [rotationSpeedMultiplier, setRotationSpeedMultiplier] = useState(1);
+  // These are the values the slider displays.
+  const [sliderOrbitSpeed, setSliderOrbitSpeed] = useState(1);
+  const [sliderRotationSpeed, setSliderRotationSpeed] = useState(1);
+  // These are the live speeds used in the simulation.
+  const [orbitSpeed, setOrbitSpeed] = useState(1);
+  const [rotationSpeed, setRotationSpeed] = useState(1);
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
 
-  const toggleSimulationPause = () => {
-    setIsSimulationPaused((prev) => !prev);
+  // When the slider value changes, update the slider state;
+  // if not paused, update the simulation speed as well.
+  const updateOrbitSpeed = (speed: number) => {
+    setSliderOrbitSpeed(speed);
+    if (!isSimulationPaused) {
+      setOrbitSpeed(speed);
+    }
   };
 
+  const updateRotationSpeed = (speed: number) => {
+    setSliderRotationSpeed(speed);
+    if (!isSimulationPaused) {
+      setRotationSpeed(speed);
+    }
+  };
+
+  // When pausing, live speeds are set to 0 (but the slider values remain intact).
+  // On resume, the live speeds are restored from the slider values.
+  const toggleSimulationPause = () => {
+    if (!isSimulationPaused) {
+      setOrbitSpeed(0);
+      setRotationSpeed(0);
+      setIsSimulationPaused(true);
+    } else {
+      setOrbitSpeed(sliderOrbitSpeed);
+      setRotationSpeed(sliderRotationSpeed);
+      setIsSimulationPaused(false);
+    }
+  };
+
+  // Reset both slider values and live speeds to 1.
   const resetOrbits = () => {
-    setOrbitSpeedMultiplier(1);
-    setRotationSpeedMultiplier(1);
-    setIsSimulationPaused(false);
+    setSliderOrbitSpeed(1);
+    setSliderRotationSpeed(1);
+    if (!isSimulationPaused) {
+      setOrbitSpeed(1);
+      setRotationSpeed(1);
+    }
   };
 
   return (
     <SettingsContext.Provider
       value={{
-        orbitSpeedMultiplier,
-        rotationSpeedMultiplier,
+        sliderOrbitSpeed,
+        sliderRotationSpeed,
+        orbitSpeed,
+        rotationSpeed,
         isSimulationPaused,
-        setOrbitSpeedMultiplier,
-        setRotationSpeedMultiplier,
-        setIsSimulationPaused,
+        updateOrbitSpeed,
+        updateRotationSpeed,
         toggleSimulationPause,
         resetOrbits,
       }}
@@ -49,7 +89,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
 export function useSettings() {
   const context = useContext(SettingsContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useSettings must be used within a SettingsProvider");
   }
   return context;
