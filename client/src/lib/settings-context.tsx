@@ -10,6 +10,7 @@ interface SettingsContextType {
   updateRotationSpeed: (speed: number) => void;
   toggleSimulationPause: () => void;
   resetOrbits: () => void;
+  applyChanges: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType>({
@@ -27,17 +28,22 @@ const SettingsContext = createContext<SettingsContextType>({
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [orbitSpeedMultiplier, setOrbitSpeedMultiplier] = useState(1);
   const [rotationSpeedMultiplier, setRotationSpeedMultiplier] = useState(1);
+  const [pendingOrbitSpeed, setPendingOrbitSpeed] = useState(1);
+  const [pendingRotationSpeed, setPendingRotationSpeed] = useState(1);
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
 
   const updateOrbitSpeed = (speed: number) => {
-    if (!isSimulationPaused) {
-      setOrbitSpeedMultiplier(speed);
-    }
+    setPendingOrbitSpeed(speed);
   };
 
   const updateRotationSpeed = (speed: number) => {
+    setPendingRotationSpeed(speed);
+  };
+
+  const applyChanges = () => {
     if (!isSimulationPaused) {
-      setRotationSpeedMultiplier(speed);
+      setOrbitSpeedMultiplier(pendingOrbitSpeed);
+      setRotationSpeedMultiplier(pendingRotationSpeed);
     }
   };
 
@@ -55,11 +61,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       value={{
         orbitSpeedMultiplier,
         rotationSpeedMultiplier,
-        sliderOrbitSpeed: orbitSpeedMultiplier,
-        sliderRotationSpeed: rotationSpeedMultiplier,
+        sliderOrbitSpeed: pendingOrbitSpeed,
+        sliderRotationSpeed: pendingRotationSpeed,
         isSimulationPaused,
         updateOrbitSpeed,
         updateRotationSpeed,
+        applyChanges,
         toggleSimulationPause,
         resetOrbits,
       }}

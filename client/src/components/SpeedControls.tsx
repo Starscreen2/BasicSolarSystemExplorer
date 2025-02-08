@@ -92,7 +92,15 @@ export default function SpeedControls() {
             />
           </div>
           {/* Control Buttons */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => applyChanges()}
+              className="w-full flex items-center gap-2"
+            >
+              Apply
+            </Button>
             <Button
               variant="secondary"
               size="sm"
