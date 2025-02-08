@@ -18,12 +18,16 @@ export default function SpeedControls() {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleOrbitSpeedChange = (value: number[]) => {
-    setOrbitSpeedMultiplier(value[0]);
+  const handleOrbitSpeedChange = (values: number[]) => {
+    if (values && values.length > 0) {
+      setOrbitSpeedMultiplier(values[0]);
+    }
   };
 
-  const handleRotationSpeedChange = (value: number[]) => {
-    setRotationSpeedMultiplier(value[0]);
+  const handleRotationSpeedChange = (values: number[]) => {
+    if (values && values.length > 0) {
+      setRotationSpeedMultiplier(values[0]);
+    }
   };
 
   if (!isOpen) {
@@ -57,11 +61,12 @@ export default function SpeedControls() {
               </span>
             </div>
             <Slider
+              defaultValue={[orbitSpeedMultiplier]}
               value={[orbitSpeedMultiplier]}
               onValueChange={handleOrbitSpeedChange}
               min={0}
-              max={100}
-              step={0.5}
+              max={10}
+              step={0.1}
               className="cursor-pointer"
             />
           </div>
@@ -74,11 +79,12 @@ export default function SpeedControls() {
               </span>
             </div>
             <Slider
+              defaultValue={[rotationSpeedMultiplier]}
               value={[rotationSpeedMultiplier]}
               onValueChange={handleRotationSpeedChange}
               min={0}
-              max={100}
-              step={0.5}
+              max={10}
+              step={0.1}
               className="cursor-pointer"
             />
           </div>

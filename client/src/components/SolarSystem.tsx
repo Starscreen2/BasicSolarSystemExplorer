@@ -30,7 +30,11 @@ const SettingsContext = createContext<SettingsContextType>({
 });
 
 export function useSettings() {
-  return useContext(SettingsContext);
+  const context = useContext(SettingsContext);
+  if (!context) {
+    throw new Error('useSettings must be used within a SettingsContext.Provider');
+  }
+  return context;
 }
 
 function createTexturePattern() {
@@ -376,6 +380,8 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
 
   const resetOrbits = () => {
     setIsSimulationPaused(true);
+
+    // Reset speed multipliers
     setRotationSpeedMultiplier(1);
     setOrbitSpeedMultiplier(1);
 
@@ -411,7 +417,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
       setIsSimulationPaused,
       setOrbitSpeedMultiplier,
       setRotationSpeedMultiplier,
-      resetOrbits
+      resetOrbits,
     }}>
       <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
         <CameraAnimation />
