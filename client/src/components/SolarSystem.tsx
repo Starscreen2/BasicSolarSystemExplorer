@@ -211,6 +211,7 @@ function Planet3D({
 }) {
   const orbitRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
+  const ringsRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const texture = createTexturePattern();
   const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused } = useSettings();
@@ -222,6 +223,8 @@ function Planet3D({
 
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
+  // Slower rotation for rings
+  const ringRotationSpeed = baseRotationSpeed * 0.3;
 
   useEffect(() => {
     if (orbitSpeedMultiplier !== lastSpeedRef.current) {
@@ -239,6 +242,9 @@ function Planet3D({
     if (planetRef.current && orbitRef.current && !isSimulationPaused) {
       const rotationDirection = rotationPeriod < 0 ? -1 : 1;
       planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
+
+      // Rotate rings independently
+      //Removed ring rotation
 
       const orbitRadius = position[0];
 
@@ -266,6 +272,7 @@ function Planet3D({
   });
 
   const scaleFactor = Math.max(0.3, Math.min(1.5, (diameter / 12742) * 0.8));
+
   return (
     <group ref={orbitRef}>
       <mesh
@@ -276,6 +283,21 @@ function Planet3D({
         <sphereGeometry args={[scaleFactor, 32, 32]} />
         <meshStandardMaterial color={color} map={texture} metalness={0.2} roughness={0.8} />
       </mesh>
+      {name === "Saturn" && (
+        <group rotation={[Math.PI / 9, 0, 0]}>
+          <mesh ref={ringsRef}>
+            <ringGeometry args={[scaleFactor * 1.2, scaleFactor * 2, 64]} />
+            <meshStandardMaterial
+              color="#a89f8d"
+              side={THREE.DoubleSide}
+              transparent={true}
+              opacity={0.8}
+              metalness={0.3}
+              roughness={0.7}
+            />
+          </mesh>
+        </group>
+      )}
       <group>
         <Billboard follow lockX={false} lockY={false} lockZ={false}>
           <Text position={[0, scaleFactor + 0.5, 0]} fontSize={0.8} color="white" anchorX="center" anchorY="bottom">

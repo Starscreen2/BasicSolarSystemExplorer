@@ -1,11 +1,13 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, Stars, Html } from "@react-three/drei";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Planet } from "@shared/schema";
+import { useSettings } from "@/lib/settings-context";
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 
 interface CustomPlanet extends Planet {
   position: [number, number, number];
@@ -18,21 +20,42 @@ const G = 6.67430e-11; // Gravitational constant
 const TIME_STEP = 1 / 60; // 60 FPS
 const SCALE_FACTOR = 1e9; // Scale factor for visualization
 
-function DraggablePlanet({ 
+// Initial camera settings
+const INITIAL_CAMERA_POSITION = new THREE.Vector3(0, 20, 20);
+const INITIAL_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
+
+// Camera animation settings
+const CAMERA_TRANSITION_DURATION = 1000; // milliseconds
+const CAMERA_EASING = (t: number) => t * (2 - t); // easeOut quadratic
+
+function DraggablePlanet({
   planet,
   onDragEnd,
-}: { 
+}: {
   planet: CustomPlanet;
   onDragEnd: (position: [number, number, number]) => void;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const ringsRef = useRef<THREE.Mesh>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState<[number, number, number]>(planet.position);
   const dragPlane = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
   const intersection = useRef(new THREE.Vector3());
 
+  // Ring geometry for Saturn
+  const ringGeometry = useMemo(() => {
+    if (planet.name === "Saturn") {
+      const innerRadius = (planet.diameter / 100000) * 1.5;
+      const outerRadius = (planet.diameter / 100000) * 2.5;
+      return new THREE.RingGeometry(innerRadius, outerRadius, 64);
+    }
+    return null;
+  }, [planet.name, planet.diameter]);
+
   const handlePointerDown = (e: THREE.Event) => {
-    e.stopPropagation();
+    if ('stopPropagation' in e) {
+      (e as unknown as { stopPropagation: () => void }).stopPropagation();
+    }
     setIsDragging(true);
     if (meshRef.current) {
       const worldPosition = new THREE.Vector3();
@@ -43,7 +66,9 @@ function DraggablePlanet({
 
   const handlePointerMove = (e: THREE.Event) => {
     if (isDragging && meshRef.current) {
-      e.stopPropagation();
+      if ('stopPropagation' in e) {
+        (e as unknown as { stopPropagation: () => void }).stopPropagation();
+      }
       const event = e as unknown as PointerEvent;
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2(
@@ -54,7 +79,6 @@ function DraggablePlanet({
       raycaster.setFromCamera(mouse, (e as any).camera);
       raycaster.ray.intersectPlane(dragPlane.current, intersection.current);
 
-      // Limit the drag distance to prevent planets from going too far
       const maxDistance = 50;
       const distance = intersection.current.length();
       if (distance > maxDistance) {
@@ -71,6 +95,11 @@ function DraggablePlanet({
         0,
         intersection.current.z
       ]);
+
+      // Update rings position if present
+      if (ringsRef.current) {
+        ringsRef.current.position.copy(meshRef.current.position);
+      }
     }
   };
 
@@ -82,25 +111,43 @@ function DraggablePlanet({
   };
 
   return (
-    <mesh
-      ref={meshRef}
-      position={planet.position}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-    >
-      <sphereGeometry args={[planet.diameter / 100000, 32, 32]} />
-      <meshStandardMaterial 
-        color={isDragging ? "#6f8fff" : "#4444ff"}
-        metalness={0.2}
-        roughness={0.8}
-      />
-      <Html>
-        <div className="bg-black/80 text-white px-2 py-1 rounded text-sm">
-          {planet.name}
-        </div>
-      </Html>
-    </mesh>
+    <group>
+      <mesh
+        ref={meshRef}
+        position={planet.position}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        <sphereGeometry args={[planet.diameter / 100000, 32, 32]} />
+        <meshStandardMaterial
+          color={isDragging ? "#6f8fff" : "#4444ff"}
+          metalness={0.2}
+          roughness={0.8}
+        />
+        <Html>
+          <div className="bg-black/80 text-white px-2 py-1 rounded text-sm">
+            {planet.name}
+          </div>
+        </Html>
+      </mesh>
+
+      {planet.name === "Saturn" && ringGeometry && (
+        <mesh
+          ref={ringsRef}
+          position={planet.position}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <ringGeometry args={[ (planet.diameter / 100000) * 1.5, (planet.diameter / 100000) * 2.5, 64]}/>
+          <meshStandardMaterial
+            color="#a89f8d"
+            side={THREE.DoubleSide}
+            transparent={true}
+            opacity={0.8}
+          />
+        </mesh>
+      )}
+    </group>
   );
 }
 
@@ -117,10 +164,47 @@ function Sun() {
   );
 }
 
+// Temporary: Simplified reset without animation for debugging
 export default function SolarSystemBuilder() {
   const [planets, setPlanets] = useState<CustomPlanet[]>([]);
   const [simulating, setSimulating] = useState(false);
   const [timeScale, setTimeScale] = useState(1);
+  const controlsRef = useRef<OrbitControlsImpl>(null);
+  const { setCameraRef } = useSettings();
+
+  useEffect(() => {
+    if (controlsRef.current) {
+      console.log("Initializing camera controls ref");
+
+      const reset = () => {
+        console.log("Reset function called");
+        if (controlsRef.current) {
+          console.log("Current camera position:", controlsRef.current.object.position);
+          console.log("Current camera target:", controlsRef.current.target);
+
+          // Simplified direct reset for debugging
+          controlsRef.current.object.position.copy(INITIAL_CAMERA_POSITION);
+          controlsRef.current.target.copy(INITIAL_CAMERA_TARGET);
+          controlsRef.current.update();
+
+          console.log("New camera position:", controlsRef.current.object.position);
+          console.log("New camera target:", controlsRef.current.target);
+        } else {
+          console.warn("Controls ref not available during reset");
+        }
+      };
+
+      const enhancedRef = {
+        current: controlsRef.current,
+        reset,
+      };
+
+      console.log("Setting enhanced camera ref");
+      console.log("Reset method exists:", typeof enhancedRef.reset === 'function');
+
+      setCameraRef(enhancedRef);
+    }
+  }, [controlsRef, setCameraRef]);
 
   const addPlanet = () => {
     const newPlanet: CustomPlanet = {
@@ -181,7 +265,7 @@ export default function SolarSystemBuilder() {
         </div>
 
         <div className="h-[600px]">
-          <Canvas camera={{ position: [0, 20, 20], fov: 60 }}>
+          <Canvas camera={{ position: INITIAL_CAMERA_POSITION.toArray(), fov: 60 }}>
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
@@ -196,7 +280,8 @@ export default function SolarSystemBuilder() {
               />
             ))}
 
-            <OrbitControls 
+            <OrbitControls
+              ref={controlsRef}
               enableZoom={true}
               enablePan={true}
               enableRotate={true}
