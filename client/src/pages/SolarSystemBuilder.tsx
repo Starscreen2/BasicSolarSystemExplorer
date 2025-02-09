@@ -177,20 +177,10 @@ export default function SolarSystemBuilder() {
       console.log("Initializing camera controls ref");
 
       const reset = () => {
-        console.log("Reset function called");
         if (controlsRef.current) {
-          console.log("Current camera position:", controlsRef.current.object.position);
-          console.log("Current camera target:", controlsRef.current.target);
-
-          // Simplified direct reset for debugging
           controlsRef.current.object.position.copy(INITIAL_CAMERA_POSITION);
           controlsRef.current.target.copy(INITIAL_CAMERA_TARGET);
           controlsRef.current.update();
-
-          console.log("New camera position:", controlsRef.current.object.position);
-          console.log("New camera target:", controlsRef.current.target);
-        } else {
-          console.warn("Controls ref not available during reset");
         }
       };
 

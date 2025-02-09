@@ -247,7 +247,9 @@ function Planet3D({
       planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
 
       // Rotate rings independently
-      //Removed ring rotation
+      if (ringsRef.current) {
+        ringsRef.current.rotation.y += ringRotationSpeed * rotationSpeedMultiplier;
+      }
 
       const orbitRadius = position[0];
 
