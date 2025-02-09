@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useSettings } from "@/lib/settings-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings2, Pause, Play, RotateCcw } from "lucide-react";
+import { Settings2, Pause, Play, RotateCcw, Camera } from "lucide-react";
 
 export default function SpeedControls() {
   const {
@@ -16,6 +16,7 @@ export default function SpeedControls() {
     updateRotationSpeed,
     toggleSimulationPause,
     resetOrbits,
+    resetCamera,
     applyChanges,
   } = useSettings();
 
@@ -91,7 +92,7 @@ export default function SpeedControls() {
             />
           </div>
           {/* Control Buttons */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               variant="default"
               size="sm"
@@ -126,6 +127,15 @@ export default function SpeedControls() {
             >
               <RotateCcw className="h-4 w-4" />
               Reset
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={resetCamera}
+              className="w-full flex items-center gap-2"
+            >
+              <Camera className="h-4 w-4" />
+              Reset Camera
             </Button>
           </div>
         </div>

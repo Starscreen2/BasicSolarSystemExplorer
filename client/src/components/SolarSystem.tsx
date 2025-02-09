@@ -1,6 +1,9 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
+
+import { Button } from "@/components/ui/button";
+
 import { useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 import { useSettings } from "@/lib/settings-context";
@@ -360,8 +363,10 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
     updateRotationSpeed,
     toggleSimulationPause,
     resetOrbits,
+    resetCamera
   } = useSettings();
-  const [cameraRef, setCameraRef] = useState(null);
+
+  const { setCameraRef } = useSettings();
 
   // A simple scaling function for planet distances.
   const distanceScale = (distance: number) => {
@@ -381,71 +386,73 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
   ];
 
   return (
-    <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
-      <CameraAnimation />
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-      <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
-      <Sun />
-      {planets.map((planet) => (
-        <OrbitalRing
-          key={`ring-${planet.id}`}
-          radius={distanceScale(Number(planet.distance))}
-          planet={planet}
-        />
-      ))}
-      {planets.map((planet, index) => (
-        <Planet3D
-          key={planet.id}
-          position={[distanceScale(Number(planet.distance)), 0, 0]}
-          color={colors[index]}
-          name={planet.name}
-          diameter={planet.diameter}
-          description={planet.description}
-          orbitalPeriod={planet.orbitalPeriod}
-          rotationPeriod={planet.rotationPeriod}
-        />
-      ))}
-      <OrbitControls
-        ref={(ref) => {
-          if (ref) {
-            const enhancedRef = {
-              current: ref,
-              reset: () => {
-                const startPos = ref.object.position.clone();
-                const startTarget = ref.target.clone();
-                const endPos = new THREE.Vector3(0, 40, 60);
-                const endTarget = new THREE.Vector3(0, 0, 0);
-                let progress = 0;
+    <>
+      <Canvas camera={{ position: [0, 40, 60], fov: 60 }}>
+        <CameraAnimation />
+        <ambientLight intensity={0.5} />
+        <pointLight position={[10, 10, 10]} intensity={1} />
+        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
+        <Sun />
+        {planets.map((planet) => (
+          <OrbitalRing
+            key={`ring-${planet.id}`}
+            radius={distanceScale(Number(planet.distance))}
+            planet={planet}
+          />
+        ))}
+        {planets.map((planet, index) => (
+          <Planet3D
+            key={planet.id}
+            position={[distanceScale(Number(planet.distance)), 0, 0]}
+            color={colors[index]}
+            name={planet.name}
+            diameter={planet.diameter}
+            description={planet.description}
+            orbitalPeriod={planet.orbitalPeriod}
+            rotationPeriod={planet.rotationPeriod}
+          />
+        ))}
+        <OrbitControls
+          ref={(ref) => {
+            if (ref) {
+              const enhancedRef = {
+                current: ref,
+                reset: () => {
+                  const startPos = ref.object.position.clone();
+                  const startTarget = ref.target.clone();
+                  const endPos = new THREE.Vector3(0, 40, 60);
+                  const endTarget = new THREE.Vector3(0, 0, 0);
+                  let progress = 0;
 
-                function animate() {
-                  progress += 0.02;
-                  if (progress >= 1) {
-                    ref.object.position.copy(endPos);
-                    ref.target.copy(endTarget);
+                  function animate() {
+                    progress += 0.02;
+                    if (progress >= 1) {
+                      ref.object.position.copy(endPos);
+                      ref.target.copy(endTarget);
+                      ref.update();
+                      return;
+                    }
+
+                    const t = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
+                    ref.object.position.lerpVectors(startPos, endPos, t);
+                    ref.target.lerpVectors(startTarget, endTarget, t);
                     ref.update();
-                    return;
+                    requestAnimationFrame(animate);
                   }
 
-                  const t = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
-                  ref.object.position.lerpVectors(startPos, endPos, t);
-                  ref.target.lerpVectors(startTarget, endTarget, t);
-                  ref.update();
-                  requestAnimationFrame(animate);
+                  animate();
                 }
-
-                animate();
-              }
-            };
-            setCameraRef(enhancedRef);
-          }
-        }}
-        enableZoom
-        enablePan
-        enableRotate
-        maxDistance={150}
-        minDistance={20}
-      />
-    </Canvas>
+              };
+              setCameraRef(enhancedRef);
+            }
+          }}
+          enableZoom
+          enablePan
+          enableRotate
+          maxDistance={150}
+          minDistance={20}
+        />
+      </Canvas>
+    </>
   );
 }
