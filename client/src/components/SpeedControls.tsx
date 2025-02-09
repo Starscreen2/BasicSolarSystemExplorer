@@ -24,13 +24,13 @@ export default function SpeedControls() {
 
   const handleOrbitSpeedChange = (values: number[]) => {
     if (values.length > 0) {
-      updateOrbitSpeed(Math.max(0, values[0]));
+      updateOrbitSpeed(values[0]);
     }
   };
 
   const handleRotationSpeedChange = (values: number[]) => {
     if (values.length > 0) {
-      updateRotationSpeed(Math.max(0, values[0]));
+      updateRotationSpeed(values[0]);
     }
   };
 

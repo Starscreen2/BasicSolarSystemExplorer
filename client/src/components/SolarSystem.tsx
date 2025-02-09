@@ -247,9 +247,7 @@ function Planet3D({
       planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
 
       // Rotate rings independently
-      if (ringsRef.current) {
-        ringsRef.current.rotation.y += ringRotationSpeed * rotationSpeedMultiplier;
-      }
+      //Removed ring rotation
 
       const orbitRadius = position[0];
 
@@ -425,7 +423,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
                   const endPos = new THREE.Vector3(0, 40, 60);
                   const endTarget = new THREE.Vector3(0, 0, 0);
                   let progress = 0;
-
+                  
                   function animate() {
                     progress += 0.02;
                     if (progress >= 1) {
@@ -434,14 +432,14 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
                       ref.update();
                       return;
                     }
-
+                    
                     const t = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
                     ref.object.position.lerpVectors(startPos, endPos, t);
                     ref.target.lerpVectors(startTarget, endTarget, t);
                     ref.update();
                     requestAnimationFrame(animate);
                   }
-
+                  
                   animate();
                 }
               };

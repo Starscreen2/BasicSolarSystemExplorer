@@ -170,17 +170,27 @@ export default function SolarSystemBuilder() {
   const [simulating, setSimulating] = useState(false);
   const [timeScale, setTimeScale] = useState(1);
   const controlsRef = useRef<OrbitControlsImpl>(null);
-  const { setCameraRef } = useSettings();
+  const { setCameraRef, resetCamera } = useSettings();
 
   useEffect(() => {
     if (controlsRef.current) {
       console.log("Initializing camera controls ref");
 
       const reset = () => {
+        console.log("Reset function called");
         if (controlsRef.current) {
+          console.log("Current camera position:", controlsRef.current.object.position);
+          console.log("Current camera target:", controlsRef.current.target);
+
+          // Simplified direct reset for debugging
           controlsRef.current.object.position.copy(INITIAL_CAMERA_POSITION);
           controlsRef.current.target.copy(INITIAL_CAMERA_TARGET);
           controlsRef.current.update();
+
+          console.log("New camera position:", controlsRef.current.object.position);
+          console.log("New camera target:", controlsRef.current.target);
+        } else {
+          console.warn("Controls ref not available during reset");
         }
       };
 
@@ -271,7 +281,21 @@ export default function SolarSystemBuilder() {
             ))}
 
             <OrbitControls
-              ref={controlsRef}
+              ref={(ref) => {
+                controlsRef.current = ref;
+                if (ref) {
+                  const enhancedRef = {
+                    current: ref,
+                    reset: () => {
+                      ref.reset();
+                      ref.object.position.copy(INITIAL_CAMERA_POSITION);
+                      ref.target.copy(INITIAL_CAMERA_TARGET);
+                      ref.update();
+                    }
+                  };
+                  setCameraRef(enhancedRef);
+                }
+              }}
               enableZoom={true}
               enablePan={true}
               enableRotate={true}

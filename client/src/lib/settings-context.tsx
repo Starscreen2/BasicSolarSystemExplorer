@@ -10,7 +10,10 @@ interface SettingsContextType {
   updateRotationSpeed: (speed: number) => void;
   toggleSimulationPause: () => void;
   resetOrbits: () => void;
+  resetCamera: () => void;
   applyChanges: () => void;
+  cameraRef: React.MutableRefObject<any> | null;
+  setCameraRef: (ref: React.MutableRefObject<any>) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -21,6 +24,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [pendingOrbitSpeed, setPendingOrbitSpeed] = useState(1);
   const [pendingRotationSpeed, setPendingRotationSpeed] = useState(1);
   const [isSimulationPaused, setIsSimulationPaused] = useState(false);
+  const [cameraRef, setCameraRefState] = useState<React.MutableRefObject<any> | null>(null);
 
   const updateOrbitSpeed = (speed: number) => {
     setPendingOrbitSpeed(speed);
@@ -38,11 +42,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const toggleSimulationPause = () => {
     setIsSimulationPaused(!isSimulationPaused);
     if (isSimulationPaused) {
-      // When resuming, apply the pending speeds
       setOrbitSpeedMultiplier(pendingOrbitSpeed);
       setRotationSpeedMultiplier(pendingRotationSpeed);
     } else {
-      // When pausing, set speeds to 0 but keep pending values
       setOrbitSpeedMultiplier(0);
       setRotationSpeedMultiplier(0);
     }
@@ -54,6 +56,26 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setOrbitSpeedMultiplier(1);
     setRotationSpeedMultiplier(1);
     setIsSimulationPaused(false);
+  };
+
+  const resetCamera = () => {
+    console.log("Reset camera called in settings context");
+    console.log("Camera ref:", cameraRef);
+    console.log("Camera ref current:", cameraRef?.current);
+    console.log("Reset method exists:", cameraRef?.current?.reset !== undefined);
+
+    if (cameraRef?.current?.reset) {
+      console.log("Executing camera reset");
+      cameraRef.current.reset();
+    } else {
+      console.warn("Camera reset not available - missing ref or reset method");
+    }
+  };
+
+  const setCameraRef = (ref: React.MutableRefObject<any>) => {
+    console.log("Setting camera ref:", ref);
+    console.log("Reset method available:", ref?.current?.reset !== undefined);
+    setCameraRefState(ref);
   };
 
   return (
@@ -68,7 +90,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateRotationSpeed,
         toggleSimulationPause,
         resetOrbits,
+        resetCamera,
         applyChanges,
+        cameraRef,
+        setCameraRef,
       }}
     >
       {children}
