@@ -361,7 +361,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
     toggleSimulationPause,
     resetOrbits,
   } = useSettings();
-
+  const [cameraRef, setCameraRef] = useState(null);
 
   // A simple scaling function for planet distances.
   const distanceScale = (distance: number) => {
@@ -406,7 +406,46 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
           rotationPeriod={planet.rotationPeriod}
         />
       ))}
-      <OrbitControls enableZoom enablePan enableRotate maxDistance={150} minDistance={20} />
+      <OrbitControls
+        ref={(ref) => {
+          if (ref) {
+            const enhancedRef = {
+              current: ref,
+              reset: () => {
+                const startPos = ref.object.position.clone();
+                const startTarget = ref.target.clone();
+                const endPos = new THREE.Vector3(0, 40, 60);
+                const endTarget = new THREE.Vector3(0, 0, 0);
+                let progress = 0;
+
+                function animate() {
+                  progress += 0.02;
+                  if (progress >= 1) {
+                    ref.object.position.copy(endPos);
+                    ref.target.copy(endTarget);
+                    ref.update();
+                    return;
+                  }
+
+                  const t = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
+                  ref.object.position.lerpVectors(startPos, endPos, t);
+                  ref.target.lerpVectors(startTarget, endTarget, t);
+                  ref.update();
+                  requestAnimationFrame(animate);
+                }
+
+                animate();
+              }
+            };
+            setCameraRef(enhancedRef);
+          }
+        }}
+        enableZoom
+        enablePan
+        enableRotate
+        maxDistance={150}
+        minDistance={20}
+      />
     </Canvas>
   );
 }
