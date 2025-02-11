@@ -1,18 +1,14 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
 import { Planet } from "@shared/schema";
-
 import { Button } from "@/components/ui/button";
-
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import * as THREE from "three";
 import { useSettings } from "@/lib/settings-context";
-import type { PointerEvent } from "@react-three/fiber";
+import type { ThreeEvent } from "@react-three/fiber";
 
-// =============================================================================
-// UTILITY FUNCTION: Create a texture pattern for spheres
-// =============================================================================
-function createTexturePattern() {
+// Memoize texture pattern creation
+const texturePattern = (() => {
   const canvas = document.createElement("canvas");
   canvas.width = 64;
   canvas.height = 64;
@@ -30,7 +26,14 @@ function createTexturePattern() {
     context.fill();
   }
   return new THREE.CanvasTexture(canvas);
-}
+})();
+
+// =============================================================================
+// UTILITY FUNCTION: Create a texture pattern for spheres
+// =============================================================================
+
+// function createTexturePattern() { ... } // Removed - replaced by memoized version above
+
 
 // =============================================================================
 // ORBITAL RING COMPONENT
@@ -63,13 +66,14 @@ function OrbitalRing({ radius, planet }: { radius: number; planet: Planet }) {
     },
   };
 
-  const handlePointerMove = (event: PointerEvent) => {
+  // Memoize handlers
+  const handlePointerMove = useCallback((event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation();
     setMousePosition({
       x: event.clientX,
       y: event.clientY,
     });
-  };
+  }, []);
 
   const planetRings = ringInfo[planet.name];
 
@@ -143,12 +147,11 @@ function OrbitalRing({ radius, planet }: { radius: number; planet: Planet }) {
 function Sun() {
   const sunRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
-  const texture = createTexturePattern();
   const { rotationSpeedMultiplier } = useSettings();
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     if (sunRef.current) {
-      sunRef.current.rotation.y += 0.005 * rotationSpeedMultiplier;
+      sunRef.current.rotation.y += 0.005 * rotationSpeedMultiplier * delta;
     }
   });
 
@@ -164,7 +167,7 @@ function Sun() {
           color="#ffdd00"
           emissive="#ffdd00"
           emissiveIntensity={0.5}
-          map={texture}
+          map={texturePattern}
           metalness={0.3}
           roughness={0.7}
         />
@@ -195,15 +198,7 @@ function Sun() {
 // =============================================================================
 // PLANET3D COMPONENT
 // =============================================================================
-function Planet3D({
-  position,
-  color,
-  name,
-  diameter,
-  description,
-  orbitalPeriod,
-  rotationPeriod,
-}: {
+function Planet3D({ position, color, name, diameter, description, orbitalPeriod, rotationPeriod }: {
   position: [number, number, number];
   color: string;
   name: string;
@@ -216,7 +211,6 @@ function Planet3D({
   const planetRef = useRef<THREE.Mesh>(null);
   const ringsRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
-  const texture = createTexturePattern();
   const { orbitSpeedMultiplier, rotationSpeedMultiplier, isSimulationPaused } = useSettings();
 
   const angleRef = useRef(0);
@@ -226,51 +220,48 @@ function Planet3D({
 
   const baseOrbitalSpeed = (2 * Math.PI) / (orbitalPeriod * 0.3);
   const baseRotationSpeed = (2 * Math.PI) / (Math.abs(rotationPeriod) * 3.0);
-  // Slower rotation for rings
-  const ringRotationSpeed = baseRotationSpeed * 0.3;
 
   useEffect(() => {
-    if (orbitSpeedMultiplier !== lastSpeedRef.current) {
-      if (orbitRef.current) {
-        const currentX = orbitRef.current.position.x;
-        const currentZ = orbitRef.current.position.z;
-        targetAngleRef.current = Math.atan2(currentZ, currentX);
-        setIsResetting(true);
-      }
+    if (orbitSpeedMultiplier !== lastSpeedRef.current && orbitRef.current) {
+      const currentX = orbitRef.current.position.x;
+      const currentZ = orbitRef.current.position.z;
+      targetAngleRef.current = Math.atan2(currentZ, currentX);
+      setIsResetting(true);
       lastSpeedRef.current = orbitSpeedMultiplier;
     }
   }, [orbitSpeedMultiplier]);
 
-  useFrame(() => {
-    if (planetRef.current && orbitRef.current && !isSimulationPaused) {
-      const rotationDirection = rotationPeriod < 0 ? -1 : 1;
-      planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * rotationDirection;
+  useFrame((_, delta) => {
+    if (!planetRef.current || !orbitRef.current || isSimulationPaused) return;
 
-      // Rotate rings independently
-      //Removed ring rotation
+    const rotationDirection = rotationPeriod < 0 ? -1 : 1;
+    planetRef.current.rotation.y += baseRotationSpeed * rotationSpeedMultiplier * delta * rotationDirection;
 
-      const orbitRadius = position[0];
 
-      if (isResetting) {
-        const currentX = orbitRef.current.position.x;
-        const currentZ = orbitRef.current.position.z;
-        const currentAngle = Math.atan2(currentZ, currentX);
-        let angleDiff = targetAngleRef.current - currentAngle;
-        if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-        if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-        const t = 0.1;
-        const newAngle = currentAngle + angleDiff * t;
-        orbitRef.current.position.x = Math.cos(newAngle) * orbitRadius;
-        orbitRef.current.position.z = Math.sin(newAngle) * orbitRadius;
-        if (Math.abs(angleDiff) < 0.01) {
-          setIsResetting(false);
-          angleRef.current = newAngle;
-        }
-      } else {
-        angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * 0.016;
-        orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
-        orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
+    const orbitRadius = position[0];
+
+    if (isResetting) {
+      const currentX = orbitRef.current.position.x;
+      const currentZ = orbitRef.current.position.z;
+      const currentAngle = Math.atan2(currentZ, currentX);
+      let angleDiff = targetAngleRef.current - currentAngle;
+
+      if (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+      if (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+
+      const t = 0.1;
+      const newAngle = currentAngle + angleDiff * t;
+      orbitRef.current.position.x = Math.cos(newAngle) * orbitRadius;
+      orbitRef.current.position.z = Math.sin(newAngle) * orbitRadius;
+
+      if (Math.abs(angleDiff) < 0.01) {
+        setIsResetting(false);
+        angleRef.current = newAngle;
       }
+    } else {
+      angleRef.current += baseOrbitalSpeed * orbitSpeedMultiplier * delta;
+      orbitRef.current.position.x = Math.cos(angleRef.current) * orbitRadius;
+      orbitRef.current.position.z = Math.sin(angleRef.current) * orbitRadius;
     }
   });
 
@@ -284,7 +275,7 @@ function Planet3D({
         onPointerOut={() => setHovered(false)}
       >
         <sphereGeometry args={[scaleFactor, 32, 32]} />
-        <meshStandardMaterial color={color} map={texture} metalness={0.2} roughness={0.8} />
+        <meshStandardMaterial color={color} map={texturePattern} metalness={0.2} roughness={0.8} />
       </mesh>
       {name === "Saturn" && (
         <group rotation={[Math.PI / 9, 0, 0]}>
@@ -335,6 +326,11 @@ function CameraAnimation() {
       camera.position.set(0, 100, 160);
       setStarted(true);
     }
+
+    return () => {
+      // Reset camera position on cleanup
+      camera.position.set(0, 40, 60);
+    };
   }, [camera, started]);
   useFrame(() => {
     if (started && camera.position.y > 40) {
@@ -423,7 +419,7 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
                   const endPos = new THREE.Vector3(0, 40, 60);
                   const endTarget = new THREE.Vector3(0, 0, 0);
                   let progress = 0;
-                  
+
                   function animate() {
                     progress += 0.02;
                     if (progress >= 1) {
@@ -432,14 +428,14 @@ export default function SolarSystem({ planets }: SolarSystemProps) {
                       ref.update();
                       return;
                     }
-                    
+
                     const t = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
                     ref.object.position.lerpVectors(startPos, endPos, t);
                     ref.target.lerpVectors(startTarget, endTarget, t);
                     ref.update();
                     requestAnimationFrame(animate);
                   }
-                  
+
                   animate();
                 }
               };

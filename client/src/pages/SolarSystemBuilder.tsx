@@ -1,329 +1,187 @@
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Stars, Html } from "@react-three/drei";
-import { useState, useRef, useEffect, useMemo } from "react";
-import * as THREE from "three";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { Planet } from "@shared/schema";
-import { useSettings } from "@/lib/settings-context";
-import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import { WithErrorBoundary } from "@/components/WithErrorBoundary";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Stars, Text, Html, Billboard } from "@react-three/drei";
+import * as THREE from "three";
 
-interface CustomPlanet extends Planet {
-  position: [number, number, number];
-  velocity: [number, number, number];
-  mass: number;
+const ORBITAL_ZONES = [
+  { radius: 7, label: "Inner Zone" },
+  { radius: 14, label: "Middle Zone" },
+  { radius: 21, label: "Outer Zone" },
+  { radius: 28, label: "Far Zone" }
+];
+
+const PLANET_COLORS = {
+  Mercury: "#A0522D",
+  Venus: "#DEB887",
+  Earth: "#4169E1",
+  Mars: "#CD5C5C",
+  Jupiter: "#DAA520",
+  Saturn: "#F4A460",
+  Neptune: "#4682B4",
+  Pluto: "#808080"
+};
+
+interface PlacedPlanet extends Planet {
+  orbitRadius: number;
+  angle: number;
+  speed: number;
 }
 
-// Constants for physics simulation
-const G = 6.67430e-11; // Gravitational constant
-const TIME_STEP = 1 / 60; // 60 FPS
-const SCALE_FACTOR = 1e9; // Scale factor for visualization
+function OrbitalRing({ radius, isHovered }: { radius: number; isHovered: boolean }) {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[radius, radius + 0.1, 64]} />
+      <meshBasicMaterial color={isHovered ? "#6f8fff" : "#666666"} opacity={0.3} transparent side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
 
-// Initial camera settings
-const INITIAL_CAMERA_POSITION = new THREE.Vector3(0, 20, 20);
-const INITIAL_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
-
-// Camera animation settings
-const CAMERA_TRANSITION_DURATION = 1000; // milliseconds
-const CAMERA_EASING = (t: number) => t * (2 - t); // easeOut quadratic
-
-function DraggablePlanet({
-  planet,
-  onDragEnd,
-}: {
-  planet: CustomPlanet;
-  onDragEnd: (position: [number, number, number]) => void;
-}) {
+function Planet3D({ planet, color }: { planet: PlacedPlanet; color: string }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const ringsRef = useRef<THREE.Mesh>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragPosition, setDragPosition] = useState<[number, number, number]>(planet.position);
-  const dragPlane = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
-  const intersection = useRef(new THREE.Vector3());
+  const [hovered, setHovered] = useState(false);
 
-  // Ring geometry for Saturn
-  const ringGeometry = useMemo(() => {
-    if (planet.name === "Saturn") {
-      const innerRadius = (planet.diameter / 100000) * 1.5;
-      const outerRadius = (planet.diameter / 100000) * 2.5;
-      return new THREE.RingGeometry(innerRadius, outerRadius, 64);
-    }
-    return null;
-  }, [planet.name, planet.diameter]);
-
-  const handlePointerDown = (e: THREE.Event) => {
-    if ('stopPropagation' in e) {
-      (e as unknown as { stopPropagation: () => void }).stopPropagation();
-    }
-    setIsDragging(true);
-    if (meshRef.current) {
-      const worldPosition = new THREE.Vector3();
-      meshRef.current.getWorldPosition(worldPosition);
-      setDragPosition([worldPosition.x, worldPosition.y, worldPosition.z]);
-    }
-  };
-
-  const handlePointerMove = (e: THREE.Event) => {
-    if (isDragging && meshRef.current) {
-      if ('stopPropagation' in e) {
-        (e as unknown as { stopPropagation: () => void }).stopPropagation();
-      }
-      const event = e as unknown as PointerEvent;
-      const raycaster = new THREE.Raycaster();
-      const mouse = new THREE.Vector2(
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
-      );
-
-      raycaster.setFromCamera(mouse, (e as any).camera);
-      raycaster.ray.intersectPlane(dragPlane.current, intersection.current);
-
-      const maxDistance = 50;
-      const distance = intersection.current.length();
-      if (distance > maxDistance) {
-        intersection.current.normalize().multiplyScalar(maxDistance);
-      }
-
-      meshRef.current.position.set(
-        intersection.current.x,
-        0,
-        intersection.current.z
-      );
-      setDragPosition([
-        intersection.current.x,
-        0,
-        intersection.current.z
-      ]);
-
-      // Update rings position if present
-      if (ringsRef.current) {
-        ringsRef.current.position.copy(meshRef.current.position);
-      }
-    }
-  };
-
-  const handlePointerUp = () => {
-    if (isDragging) {
-      setIsDragging(false);
-      onDragEnd(dragPosition);
-    }
-  };
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const angle = planet.angle + planet.speed * 0.01;
+    meshRef.current.position.x = Math.cos(angle) * planet.orbitRadius;
+    meshRef.current.position.z = Math.sin(angle) * planet.orbitRadius;
+  }, [planet]);
 
   return (
     <group>
       <mesh
         ref={meshRef}
-        position={planet.position}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
       >
-        <sphereGeometry args={[planet.diameter / 100000, 32, 32]} />
-        <meshStandardMaterial
-          color={isDragging ? "#6f8fff" : "#4444ff"}
-          metalness={0.2}
-          roughness={0.8}
-        />
-        <Html>
-          <div className="bg-black/80 text-white px-2 py-1 rounded text-sm">
-            {planet.name}
-          </div>
-        </Html>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial color={color} />
       </mesh>
-
-      {planet.name === "Saturn" && ringGeometry && (
-        <mesh
-          ref={ringsRef}
-          position={planet.position}
-          rotation={[Math.PI / 2, 0, 0]}
-        >
-          <ringGeometry args={[ (planet.diameter / 100000) * 1.5, (planet.diameter / 100000) * 2.5, 64]}/>
-          <meshStandardMaterial
-            color="#a89f8d"
-            side={THREE.DoubleSide}
-            transparent={true}
-            opacity={0.8}
-          />
-        </mesh>
-      )}
+      <Billboard follow={true}>
+        <Text position={[0, 1, 0]} fontSize={0.5} color="white">
+          {planet.name}
+        </Text>
+      </Billboard>
     </group>
   );
 }
 
-function Sun() {
-  return (
-    <mesh position={[0, 0, 0]}>
-      <sphereGeometry args={[2, 32, 32]} />
-      <meshStandardMaterial
-        color="#ffdd00"
-        emissive="#ffdd00"
-        emissiveIntensity={0.5}
-      />
-    </mesh>
-  );
-}
-
-// Temporary: Simplified reset without animation for debugging
 export default function SolarSystemBuilder() {
-  const [planets, setPlanets] = useState<CustomPlanet[]>([]);
-  const [simulating, setSimulating] = useState(false);
-  const [timeScale, setTimeScale] = useState(1);
-  const controlsRef = useRef<OrbitControlsImpl>(null);
-  const { setCameraRef, resetCamera } = useSettings();
+  const [planets, setPlanets] = useState<PlacedPlanet[]>([]);
+  const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
+  const [hoveredZone, setHoveredZone] = useState<number | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  useEffect(() => {
-    if (controlsRef.current) {
-      console.log("Initializing camera controls ref");
+  const handleZoneClick = (zoneIndex: number) => {
+    if (!selectedPlanet) return;
 
-      const reset = () => {
-        console.log("Reset function called");
-        if (controlsRef.current) {
-          console.log("Current camera position:", controlsRef.current.object.position);
-          console.log("Current camera target:", controlsRef.current.target);
-
-          // Simplified direct reset for debugging
-          controlsRef.current.object.position.copy(INITIAL_CAMERA_POSITION);
-          controlsRef.current.target.copy(INITIAL_CAMERA_TARGET);
-          controlsRef.current.update();
-
-          console.log("New camera position:", controlsRef.current.object.position);
-          console.log("New camera target:", controlsRef.current.target);
-        } else {
-          console.warn("Controls ref not available during reset");
-        }
-      };
-
-      const enhancedRef = {
-        current: controlsRef.current,
-        reset,
-      };
-
-      console.log("Setting enhanced camera ref");
-      console.log("Reset method exists:", typeof enhancedRef.reset === 'function');
-
-      setCameraRef(enhancedRef);
-    }
-  }, [controlsRef, setCameraRef]);
-
-  const addPlanet = () => {
-    const newPlanet: CustomPlanet = {
-      id: planets.length + 1,
-      name: `Planet ${planets.length + 1}`,
-      description: "A custom planet",
-      diameter: 12742, // Earth-like diameter
-      distance: BigInt(0),
-      temperature: 15,
-      imageUrl: "",
-      facts: ["A custom planet"],
-      position: [10, 0, 0],
-      velocity: [0, 0, 0.1],
-      mass: 5.972e24, // Earth-like mass
-      orbitalPeriod: 365,
-      rotationPeriod: 1,
+    const zone = ORBITAL_ZONES[zoneIndex];
+    const newPlanet: PlacedPlanet = {
+      ...selectedPlanet,
+      orbitRadius: zone.radius,
+      angle: Math.random() * Math.PI * 2,
+      speed: 1 / (zone.radius / 7)
     };
-    setPlanets([...planets, newPlanet]);
-  };
 
-  const handleDragEnd = (index: number, newPosition: [number, number, number]) => {
-    const updatedPlanets = [...planets];
-    updatedPlanets[index] = {
-      ...updatedPlanets[index],
-      position: newPosition,
-    };
-    setPlanets(updatedPlanets);
-  };
-
-  const toggleSimulation = () => {
-    setSimulating(!simulating);
+    setPlanets(prev => [...prev, newPlanet]);
+    setSelectedPlanet(null);
   };
 
   return (
     <div className="py-8">
       <h1 className="text-4xl font-bold mb-8 bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-        Solar System Builder
+        3D Solar System Designer
       </h1>
 
       <Card className="p-4 mb-8 bg-black/50">
-        <div className="flex gap-4 mb-4">
-          <Button onClick={addPlanet}>Add Planet</Button>
-          <Button onClick={toggleSimulation}>
-            {simulating ? "Stop Simulation" : "Start Simulation"}
-          </Button>
-          <div className="flex items-center gap-2 ml-4">
-            <span className="text-sm">Time Scale:</span>
-            <Slider
-              value={[timeScale]}
-              onValueChange={([value]) => setTimeScale(value)}
-              min={0.1}
-              max={10}
-              step={0.1}
-              className="w-32"
-            />
-            <span className="text-sm">{timeScale}x</span>
+        <WithErrorBoundary>
+          <div className="flex gap-4 flex-wrap">
+            <div className="relative w-[800px] h-[600px]">
+              <Canvas camera={{ position: [0, 20, 30], fov: 60 }}>
+                <ambientLight intensity={0.5} />
+                <pointLight position={[10, 10, 10]} />
+                <Stars radius={100} depth={50} count={5000} factor={4} />
+
+                {/* Sun */}
+                <mesh>
+                  <sphereGeometry args={[1, 32, 32]} />
+                  <meshStandardMaterial color="#FFD700" emissive="#FFD700" />
+                </mesh>
+
+                {/* Orbital Rings */}
+                {ORBITAL_ZONES.map((zone, index) => (
+                  <group key={zone.label} onClick={() => handleZoneClick(index)}>
+                    <OrbitalRing 
+                      radius={zone.radius} 
+                      isHovered={hoveredZone === index} 
+                    />
+                  </group>
+                ))}
+
+                {/* Placed Planets */}
+                {planets.map((planet, index) => (
+                  <Planet3D
+                    key={`${planet.name}-${index}`}
+                    planet={planet}
+                    color={PLANET_COLORS[planet.name as keyof typeof PLANET_COLORS]}
+                  />
+                ))}
+
+                <OrbitControls />
+              </Canvas>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-semibold">Available Planets</h3>
+              {Object.entries(PLANET_COLORS).map(([name]) => (
+                <Button
+                  key={name}
+                  onClick={() => setSelectedPlanet({ name } as Planet)}
+                  variant={selectedPlanet?.name === name ? "secondary" : "outline"}
+                >
+                  {name}
+                </Button>
+              ))}
+              <Button 
+                onClick={() => setIsAnimating(!isAnimating)}
+                variant="default"
+                className="mt-4"
+              >
+                {isAnimating ? "Stop Orbits" : "Start Orbits"}
+              </Button>
+              <Button 
+                onClick={() => setPlanets([])} 
+                variant="destructive"
+                className="mt-2"
+              >
+                Reset
+              </Button>
+            </div>
           </div>
-        </div>
-
-        <div className="h-[600px]">
-          <Canvas camera={{ position: INITIAL_CAMERA_POSITION.toArray(), fov: 60 }}>
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} intensity={1} />
-            <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} />
-
-            <Sun />
-
-            {planets.map((planet, index) => (
-              <DraggablePlanet
-                key={planet.id}
-                planet={planet}
-                onDragEnd={(position) => handleDragEnd(index, position)}
-              />
-            ))}
-
-            <OrbitControls
-              ref={(ref) => {
-                controlsRef.current = ref;
-                if (ref) {
-                  const enhancedRef = {
-                    current: ref,
-                    reset: () => {
-                      ref.reset();
-                      ref.object.position.copy(INITIAL_CAMERA_POSITION);
-                      ref.target.copy(INITIAL_CAMERA_TARGET);
-                      ref.update();
-                    }
-                  };
-                  setCameraRef(enhancedRef);
-                }
-              }}
-              enableZoom={true}
-              enablePan={true}
-              enableRotate={true}
-              maxDistance={50}
-              minDistance={10}
-            />
-          </Canvas>
-        </div>
+        </WithErrorBoundary>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4 bg-black/50">
-          <h2 className="text-xl font-semibold mb-4">How to Play</h2>
+          <h2 className="text-xl font-semibold mb-4">How to Use</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li>Click "Add Planet" to create a new planet</li>
-            <li>Drag planets to position them in orbit</li>
-            <li>Click "Start Simulation" to see orbital motion</li>
-            <li>Adjust time scale to speed up or slow down the simulation</li>
+            <li>Select a planet from the list on the right</li>
+            <li>Click on an orbital zone to place the planet</li>
+            <li>Use mouse to rotate and zoom the view</li>
+            <li>Click "Start Orbits" to animate the system</li>
           </ul>
         </Card>
 
         <Card className="p-4 bg-black/50">
-          <h2 className="text-xl font-semibold mb-4">Physics Notes</h2>
+          <h2 className="text-xl font-semibold mb-4">Learning Notes</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li>Planets interact through gravitational forces</li>
-            <li>The Sun's mass affects orbital stability</li>
-            <li>Initial velocity determines orbital path</li>
-            <li>Try different arrangements to create stable systems</li>
+            <li>Inner planets orbit faster than outer planets</li>
+            <li>Each orbit zone represents different regions of space</li>
+            <li>Try to recreate the real solar system arrangement!</li>
           </ul>
         </Card>
       </div>
