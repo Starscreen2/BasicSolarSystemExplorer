@@ -5,7 +5,7 @@ export const planetData: InsertPlanet[] = [
     name: "Mercury",
     description: "Mercury is the smallest planet and the closest one to the Sun. It's a rocky world covered in craters, kind of like our Moon. Because it has almost no air, daytime is extremely hot, but at night, it gets super cold!",
     diameter: 4879,
-    distance: BigInt(57900000),
+    distance: 57900000,
     temperature: 167,
     imageUrl: "https://images.unsplash.com/photo-1614732414444-096e5f1122d5",
     facts: [
@@ -22,7 +22,7 @@ export const planetData: InsertPlanet[] = [
     name: "Venus",
     description: "Venus is Earth's twin in size, but it's a very different place. It is the hottest planet because its thick, poisonous clouds trap heat like a giant oven. It also spins in the opposite direction of most planets!",
     diameter: 12104,
-    distance: BigInt(108200000),
+    distance: 108200000,
     temperature: 464,
     imageUrl: "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6",
     facts: [
@@ -39,7 +39,7 @@ export const planetData: InsertPlanet[] = [
     name: "Earth",
     description: "Earth is our home and the only planet we know that has life! It has air to breathe, water to drink, and land to live on. Earth is just the right distance from the Sun to keep things warm but not too hot.",
     diameter: 12742,
-    distance: BigInt(149600000),
+    distance: 149600000,
     temperature: 15,
     imageUrl: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4",
     facts: [
@@ -56,7 +56,7 @@ export const planetData: InsertPlanet[] = [
     name: "Mars",
     description: "Mars is called the Red Planet because of its rusty-colored soil. It’s a cold desert world, and scientists think it may have had rivers and lakes long ago!",
     diameter: 6779,
-    distance: BigInt(227900000),
+    distance: 227900000,
     temperature: -63,
     imageUrl: "https://images.unsplash.com/photo-1614728263952-84ea256f9679",
     facts: [
@@ -73,7 +73,7 @@ export const planetData: InsertPlanet[] = [
     name: "Jupiter",
     description: "Jupiter is the biggest planet in the Solar System! It's a giant ball of gas with a huge storm called the Great Red Spot, which has been raging for hundreds of years.",
     diameter: 139820,
-    distance: BigInt(778500000),
+    distance: 778500000,
     temperature: -110,
     imageUrl: "https://images.unsplash.com/photo-1614728894747-a83421789f10",
     facts: [
@@ -90,7 +90,7 @@ export const planetData: InsertPlanet[] = [
     name: "Saturn",
     description: "Saturn is famous for its beautiful rings, which are made of ice and rock. It's a giant planet made mostly of gas, and it's the least dense planet in the Solar System.",
     diameter: 116460,
-    distance: BigInt(1434000000),
+    distance: 1434000000,
     temperature: -140,
     imageUrl: "https://images.unsplash.com/photo-1614314107768-6018061c7932",
     facts: [
@@ -107,7 +107,7 @@ export const planetData: InsertPlanet[] = [
     name: "Neptune",
     description: "Neptune is the farthest planet from the Sun. It has powerful winds and storms that move faster than the speed of sound!",
     diameter: 49244,
-    distance: BigInt(4495000000),
+    distance: 4495000000,
     temperature: -200,
     imageUrl: "https://images.unsplash.com/photo-1614313914157-4211a33c53d2",
     facts: [
@@ -124,7 +124,7 @@ export const planetData: InsertPlanet[] = [
     name: "Pluto",
     description: "Pluto is a dwarf planet far away from the Sun. It’s smaller than Earth’s Moon and has a heart-shaped glacier on its surface!",
     diameter: 2377,
-    distance: BigInt(5906380000),
+    distance: 5906380000,
     temperature: -230,
     imageUrl: "https://images.unsplash.com/photo-1614313915167-d9d971c4d9df",
     facts: [

@@ -4,6 +4,15 @@ An interactive web application for exploring and learning about our solar system
 
 Live Demo: (https://solar-system-explorer.replit.app)
 
+## Run Locally
+
+```bash
+npm install
+npm run dev
+```
+
+Then open `http://localhost:5000`.
+
 ## Features
 
 - 3D Solar System Visualization
@@ -16,7 +25,7 @@ Live Demo: (https://solar-system-explorer.replit.app)
 
 - Frontend: React, Three.js (@react-three/fiber), TailwindCSS
 - Backend: Express.js, TypeScript
-- Database: PostgreSQL with Drizzle ORM
+- Data: local seed data served by Express
 - Routing: Wouter
 - State Management: TanStack Query
 - UI Components: Radix UI with Shadcn/UI

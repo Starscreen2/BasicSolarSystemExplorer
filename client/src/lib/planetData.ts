@@ -5,7 +5,7 @@ export const planetData: InsertPlanet[] = [
     name: "Mercury",
     description: "The smallest and innermost planet in the Solar System, Mercury is a rocky world with extreme temperatures.",
     diameter: 4879,
-    distance: BigInt(57900000),
+    distance: 57900000,
     temperature: 167,
     imageUrl: "https://images.unsplash.com/photo-1614732414444-096e5f1122d5",
     facts: [
@@ -20,7 +20,7 @@ export const planetData: InsertPlanet[] = [
     name: "Venus",
     description: "Often called Earth's sister planet due to their similar size, Venus has a toxic atmosphere and extreme surface pressure.",
     diameter: 12104,
-    distance: BigInt(108200000),
+    distance: 108200000,
     temperature: 464,
     imageUrl: "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6",
     facts: [

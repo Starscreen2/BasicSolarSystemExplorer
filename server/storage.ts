@@ -1,10 +1,6 @@
-import { planets, type Planet, type InsertPlanet } from "@shared/schema";
-import { quizzes, type Quiz, type InsertQuiz } from "@shared/schema";
+import { type Planet, type InsertPlanet, type Quiz, type InsertQuiz } from "@shared/schema";
 import { planetData } from "@shared/planetData";
 import { quizData } from "@shared/quizData";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
-import { log } from "./vite";
 
 export interface IStorage {
   getAllPlanets(): Promise<Planet[]>;
@@ -14,68 +10,49 @@ export interface IStorage {
   createQuiz(quiz: InsertQuiz): Promise<Quiz>;
 }
 
-export class DatabaseStorage implements IStorage {
-  constructor() {
-    // Initialize the database with sample data if it's empty
-    this.initializeData().catch(console.error);
-  }
+const seededPlanets: Planet[] = planetData.map((planet, index) => ({
+  id: index + 1,
+  ...planet,
+}));
 
-  private async initializeData() {
-    try {
-      // Drop existing planets to ensure clean state
-      await db.delete(planets);
-      log(`Cleared existing planets data`, "storage");
+const seededQuizzes: Quiz[] = quizData.map((quiz, index) => ({
+  id: index + 1,
+  ...quiz,
+}));
 
-      log(`Initializing planets data with ${planetData.length} planets`, "storage");
-
-      // Initialize all planets
-      for (const planet of planetData) {
-        try {
-          const created = await this.createPlanet(planet);
-          log(`Created planet: ${created.name}`, "storage");
-        } catch (error) {
-          log(`Error creating planet ${planet.name}: ${error}`, "error");
-        }
-      }
-
-      log("Finished initializing planets data", "storage");
-
-      const existingQuizzes = await this.getAllQuizzes();
-      if (existingQuizzes.length === 0) {
-        for (const quiz of quizData) {
-          await this.createQuiz(quiz);
-        }
-      }
-    } catch (error) {
-      log(`Error during database initialization: ${error}`, "error");
-      throw error;
-    }
-  }
+export class MemoryStorage implements IStorage {
+  private planets: Planet[] = [...seededPlanets];
+  private quizzes: Quiz[] = [...seededQuizzes];
 
   async getAllPlanets(): Promise<Planet[]> {
-    const allPlanets = await db.select().from(planets).orderBy(planets.distance);
-    log(`Retrieved ${allPlanets.length} planets from database`, "storage");
-    return allPlanets;
+    return [...this.planets].sort((a, b) => a.distance - b.distance);
   }
 
   async getPlanet(id: number): Promise<Planet | undefined> {
-    const [planet] = await db.select().from(planets).where(eq(planets.id, id));
-    return planet;
+    return this.planets.find((planet) => planet.id === id);
   }
 
   async createPlanet(insertPlanet: InsertPlanet): Promise<Planet> {
-    const [planet] = await db.insert(planets).values(insertPlanet).returning();
+    const planet: Planet = {
+      id: this.planets.length + 1,
+      ...insertPlanet,
+    };
+    this.planets.push(planet);
     return planet;
   }
 
   async getAllQuizzes(): Promise<Quiz[]> {
-    return await db.select().from(quizzes);
+    return [...this.quizzes];
   }
 
   async createQuiz(insertQuiz: InsertQuiz): Promise<Quiz> {
-    const [quiz] = await db.insert(quizzes).values(insertQuiz).returning();
+    const quiz: Quiz = {
+      id: this.quizzes.length + 1,
+      ...insertQuiz,
+    };
+    this.quizzes.push(quiz);
     return quiz;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemoryStorage();
